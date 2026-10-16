@@ -57,9 +57,9 @@ export function ThemeSection() {
   return (
     <div className="panel">
       <h2>配色設定</h2>
-      <p className="muted" style={{ marginBottom: 10 }}>色と透明度(0〜100%)を変えると、右のプレビューにすぐ反映されます。「保存」で、すべての端末に反映されます。</p>
-      <div className="two-col">
-        <div>
+      <p className="muted" style={{ marginBottom: 10 }}>色と透明度(0〜100%)を変えると、プレビューにすぐ反映されます。「保存」で、すべての端末に反映されます。</p>
+      <div className="two-col theme-cols">
+        <div className="theme-colors">
           {GROUPS.map((g) => (
             <div key={g.title}>
               <h3>{g.title}</h3>
@@ -69,19 +69,21 @@ export function ThemeSection() {
             </div>
           ))}
         </div>
-        <div>
-          <div style={{ position: 'sticky', top: 70 }}>
-            <Segmented
-              label="プレビューの状態"
-              value={mode}
-              onChange={setMode}
-              options={[
-                { value: 'normal', label: '通常' },
-                { value: 'flash', label: '点滅(濃い色)' },
-                { value: 'anim', label: '点滅(動き)' },
-              ]}
-            />
-            <div className="preview-box" style={{ position: 'static', marginTop: 8 }}>
+        <div className="theme-side-col">
+          <div className="theme-side" style={{ position: 'sticky', top: 70 }}>
+            <div className="ts-seg">
+              <Segmented
+                label="プレビューの状態"
+                value={mode}
+                onChange={setMode}
+                options={[
+                  { value: 'normal', label: '通常' },
+                  { value: 'flash', label: '点滅(濃い色)' },
+                  { value: 'anim', label: '点滅(動き)' },
+                ]}
+              />
+            </div>
+            <div className="preview-box ts-prev" style={{ position: 'static', marginTop: 8 }}>
               <KidsView display={mode === 'normal' ? { ...display, flashing: false } : display} now={now} colors={draft} phase={mode === 'anim' ? phase : 0} forceFlash={mode === 'flash'} preview />
             </div>
             {lowContrast.length > 0 && (

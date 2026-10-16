@@ -58,7 +58,7 @@ export function WeekdaySection() {
       </Banner>
 
       <h3>曜日ごとのプリセット</h3>
-      <div className="two-col">
+      <div className="two-col wk-grid">
         {[1, 2, 3, 4, 5, 6, 0].map((wd) => (
           <Field key={wd} label={`${WEEKDAY_NAMES[wd]}曜日`}>
             <select

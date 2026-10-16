@@ -36,7 +36,9 @@ export function SettingsScreen({ onClose, onDisconnect }: { onClose: () => void;
         <button className="btn" onClick={onClose}>
           ← もどる
         </button>
-        <h1>せってい(保護者用)</h1>
+        <h1>
+          せってい<span className="st-sub">(保護者用)</span>
+        </h1>
         <button className={pillClass} style={{ border: 0, color: 'inherit', cursor: 'pointer' }} onClick={() => setTab('sync')} aria-label="同期の状態を見る">
           {statusLabel(mode, gh)}
         </button>

@@ -714,3 +714,170 @@ input[type='color'] {
     position: static;
   }
 }
+
+
+/* ====================== 縦向き(スマホ・タブレットを縦に持ったとき) ======================
+   設定画面を縦に使いやすい配置にする: 上部を低く、今日/明日は2列、タブは全部見える格子、
+   配色のプレビューは上に固定、ダイアログは下からのシート。 */
+.st-sub {
+  font-size: 0.7em;
+  font-weight: 600;
+  opacity: 0.85;
+}
+@media (orientation: portrait) {
+  .st-head {
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: 52px;
+  }
+  .st-head h1 {
+    font-size: 16px;
+    white-space: nowrap;
+  }
+  .st-sub {
+    display: none;
+  }
+  .st-head .btn {
+    padding: 6px 10px;
+    min-height: 36px;
+    font-size: 14px;
+  }
+  .st-pill {
+    font-size: 11px;
+    padding: 3px 8px;
+  }
+  .st-body {
+    padding: 10px;
+    gap: 10px;
+  }
+  .st-cards {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .daycard {
+    padding: 10px;
+    border-radius: 14px;
+    gap: 3px;
+    align-content: start;
+  }
+  .daycard h3 {
+    font-size: 12px;
+  }
+  .daycard .date {
+    font-size: 14px;
+  }
+  .daycard .pname {
+    font-size: 17px;
+    line-height: 1.25;
+  }
+  .daycard .tag {
+    font-size: 11px;
+    padding: 1px 7px;
+  }
+  .daycard .row .btn {
+    width: 100%;
+    white-space: normal;
+    line-height: 1.25;
+    padding: 6px 8px;
+  }
+  .st-nav {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+    padding-bottom: 0;
+  }
+  .st-nav button {
+    padding: 6px 4px;
+    font-size: 12px;
+    line-height: 1.25;
+    min-height: 44px;
+    border-radius: 12px;
+    overflow-wrap: anywhere;
+  }
+  .panel {
+    padding: 12px;
+    border-radius: 14px;
+  }
+  .panel h2 {
+    font-size: 16px;
+  }
+  /* 曜日は2列で一覧できるように */
+  .two-col.wk-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0 12px;
+  }
+  .wk-grid .field select {
+    width: 100%;
+  }
+  .field select {
+    max-width: 100%;
+  }
+  /* 配色: プレビューを上に固定して、色を変えながら見られる */
+  .theme-cols {
+    gap: 0;
+  }
+  .theme-side-col {
+    display: contents;
+  }
+  .theme-side {
+    display: contents;
+  }
+  .theme-side > * {
+    order: 2;
+  }
+  .theme-cols {
+    display: grid;
+  }
+  .ts-seg {
+    order: 0 !important;
+  }
+  .ts-prev {
+    order: 1 !important;
+    position: sticky !important;
+    top: 52px;
+    z-index: 6;
+    width: min(100%, 300px);
+    margin: 6px auto 8px !important;
+    box-shadow: 0 4px 14px rgba(40, 30, 90, 0.2);
+    background: #fff;
+  }
+  .theme-colors {
+    order: 3;
+  }
+  .editor-stage {
+    width: min(240px, 100%);
+  }
+  /* ダイアログは下から出るシート */
+  .modal-back {
+    place-items: end center;
+    padding: 0;
+  }
+  .modal {
+    width: 100%;
+    max-height: 92dvh;
+    border-radius: 18px 18px 0 0;
+  }
+  .modal-wide {
+    width: 100%;
+  }
+  .modal-title {
+    padding: 14px 16px 6px;
+    font-size: 17px;
+  }
+  .modal-body {
+    padding: 4px 16px 10px;
+  }
+  .modal-foot {
+    padding: 10px 16px calc(12px + env(safe-area-inset-bottom));
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+  }
+  .modal-foot .btn {
+    flex: 1 1 auto;
+  }
+  .list-item {
+    flex-wrap: wrap;
+  }
+}

@@ -24,7 +24,7 @@ export function SyncSection({ onDisconnect }: { onDisconnect?: () => void }) {
   const { gh, mode, syncNow, resolveConflict, remoteSummary, data } = useStore();
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [copied, setCopied] = useState<'' | 'code' | 'link'>('');
   const conn = (() => {
     try {
       return JSON.parse(localStorage.getItem('kt:conn:v1') ?? 'null') as { mode: string; repo?: string; token?: string } | null;
@@ -36,13 +36,14 @@ export function SyncSection({ onDisconnect }: { onDisconnect?: () => void }) {
   const showCode = () => {
     if (conn?.mode === 'github' && conn.repo && conn.token) setCode(encodeCode({ repo: conn.repo, token: conn.token }));
   };
-  const copy = async () => {
+  const copy = async (what: 'code' | 'link') => {
     if (!code) return;
+    const text = what === 'code' ? code : `${location.origin}${location.pathname}#c=${code}`;
     try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
+      await navigator.clipboard.writeText(text);
+      setCopied(what);
     } catch {
-      setCopied(false);
+      setCopied('');
     }
   };
   const remote = remoteSummary();
@@ -137,7 +138,9 @@ export function SyncSection({ onDisconnect }: { onDisconnect?: () => void }) {
       )}
 
       <h3>ほかの端末で使う</h3>
-      <p className="muted">ほかの端末の最初の画面にこのコードを入れると、同じ予定がひらきます。コードにはGitHubへの書き込み権限が含まれます。他の人に見せないでください。</p>
+      <p className="muted">
+        いちばん簡単なのは<strong>連携リンク</strong>です。リンクをコピーして、ほかの端末(AirDropやメモ経由)で開くと、入力なしでつながります。コードを貼り付けてもつながります。どちらにもGitHubへの書き込み権限が含まれるので、他の人には見せないでください。
+      </p>
       {!code ? (
         <button className="btn" onClick={showCode}>
           コードを表示する
@@ -146,10 +149,13 @@ export function SyncSection({ onDisconnect }: { onDisconnect?: () => void }) {
         <div className="field">
           <textarea readOnly rows={4} value={code} onFocus={(e) => e.currentTarget.select()} style={{ width: '100%', wordBreak: 'break-all' }} aria-label="ほかの端末用のコード" />
           <div className="row">
-            <button className="btn btn-sm" onClick={() => void copy()}>
-              {copied ? 'コピーしました' : 'コピー'}
+            <button className="btn btn-sm btn-primary" onClick={() => void copy('link')}>
+              {copied === 'link' ? 'リンクをコピーしました' : '連携リンクをコピー'}
             </button>
-            <button className="btn btn-sm" onClick={() => (setCode(null), setCopied(false))}>
+            <button className="btn btn-sm" onClick={() => void copy('code')}>
+              {copied === 'code' ? 'コードをコピーしました' : 'コードをコピー'}
+            </button>
+            <button className="btn btn-sm" onClick={() => (setCode(null), setCopied(''))}>
               かくす
             </button>
           </div>

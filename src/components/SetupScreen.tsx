@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { GhClient, decodeCode, isValidRepo, saveConnection, type Connection, type GhConfig } from '../data/github';
 import { Banner } from './ui';
 
@@ -14,8 +14,21 @@ async function verify(cfg: GhConfig): Promise<string | null> {
 }
 
 /** 最初の画面。コードを入れるとつながり、この端末では次回から自動で開く */
+/** 連携リンク(…/#c=コード)で開かれたときのコード。履歴にトークンを残さないよう、読んだらすぐURLから消す */
+function takeLinkCode(): string | null {
+  try {
+    const m = location.hash.match(/^#c=(kt1\.[A-Za-z0-9_-]+)$/);
+    if (!m) return null;
+    history.replaceState(null, '', location.pathname + location.search);
+    return m[1];
+  } catch {
+    return null;
+  }
+}
+
 export function SetupScreen({ onDone }: { onDone: (c: Connection) => void }) {
-  const [code, setCode] = useState('');
+  const [linkCode] = useState(takeLinkCode);
+  const [code, setCode] = useState(linkCode ?? '');
   const [first, setFirst] = useState(false);
   const [repo, setRepo] = useState('');
   const [token, setToken] = useState('');
@@ -35,6 +48,20 @@ export function SetupScreen({ onDone }: { onDone: (c: Connection) => void }) {
     saveConnection(c);
     onDone(c);
   };
+
+  // 連携リンクから開いたときは、自動でつなぐ(失敗したらコード欄に残して理由を表示)
+  const started = useRef(false);
+  useEffect(() => {
+    if (!linkCode || started.current) return;
+    started.current = true;
+    const cfg = decodeCode(linkCode);
+    if (!cfg) {
+      setError('連携リンクが正しくありません。もう一度リンクをコピーするか、コードを貼り付けてください');
+      return;
+    }
+    void connect(cfg);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const submitCode = (e: FormEvent) => {
     e.preventDefault();

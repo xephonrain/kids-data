@@ -15,13 +15,17 @@ interface Props {
 
 /**
  * 画像の編集。元画像は加工せず、形・倍率・位置・表示方法・枠だけを保存する。
- * ドラッグで移動、スライダーで拡大縮小、「画像全体」「枠いっぱい」を選べる。
+ * ドラッグで移動、2本指のピンチやスライダーで拡大縮小、「画像全体」「枠いっぱい」を選べる。
  */
 export function ImageEditor({ value, name, userId, onChange, onUploaded }: Props) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const stage = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; y: number; ox: number; oy: number; w: number } | null>(null);
+  // 画面上の指の位置。2本になったらピンチ(拡大・縮小)として扱う
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinch = useRef<{ dist: number; scale: number } | null>(null);
+  const clampScale = (v: number) => Math.round(Math.max(0.2, Math.min(4, v)) * 100) / 100;
   const src = useImageUrl(value.imagePath);
 
   const onFile = async (file: File | undefined) => {
@@ -49,23 +53,58 @@ export function ImageEditor({ value, name, userId, onChange, onUploaded }: Props
         onPointerDown={(e) => {
           if (!value.imagePath) return;
           (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
-          const w = stage.current?.getBoundingClientRect().width ?? 300;
-          drag.current = { x: e.clientX, y: e.clientY, ox: value.offsetX, oy: value.offsetY, w };
+          pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          if (pointers.current.size >= 2) {
+            // 2本目の指が触れた: ピンチ開始(移動は止める)
+            const [p1, p2] = [...pointers.current.values()];
+            pinch.current = { dist: Math.hypot(p1.x - p2.x, p1.y - p2.y) || 1, scale: value.scale };
+            drag.current = null;
+          } else {
+            const w = stage.current?.getBoundingClientRect().width ?? 300;
+            drag.current = { x: e.clientX, y: e.clientY, ox: value.offsetX, oy: value.offsetY, w };
+          }
         }}
         onPointerMove={(e) => {
+          if (pointers.current.has(e.pointerId)) pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+          const pc = pinch.current;
+          if (pc && pointers.current.size >= 2) {
+            // ピンチアウトで拡大、ピンチインで縮小
+            const [p1, p2] = [...pointers.current.values()];
+            const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+            onChange({ scale: clampScale(pc.scale * (dist / pc.dist)) });
+            return;
+          }
           const d = drag.current;
           if (!d) return;
           const clamp = (v: number) => Math.max(-2, Math.min(2, v));
           onChange({ offsetX: clamp(d.ox + (e.clientX - d.x) / d.w), offsetY: clamp(d.oy + (e.clientY - d.y) / d.w) });
         }}
-        onPointerUp={() => (drag.current = null)}
-        onPointerCancel={() => (drag.current = null)}
-        aria-label="画像のプレビュー。ドラッグで位置を調整できます"
+        onPointerUp={(e) => {
+          pointers.current.delete(e.pointerId);
+          pinch.current = null;
+          // ピンチ後に残った1本の指で、そのまま移動を続けられるようにする
+          const rest = [...pointers.current.values()][0];
+          if (rest && value.imagePath) {
+            const w = stage.current?.getBoundingClientRect().width ?? 300;
+            drag.current = { x: rest.x, y: rest.y, ox: value.offsetX, oy: value.offsetY, w };
+          } else drag.current = null;
+        }}
+        onPointerCancel={(e) => {
+          pointers.current.delete(e.pointerId);
+          pinch.current = null;
+          drag.current = null;
+        }}
+        onWheel={(e) => {
+          // パソコン: Ctrl(⌘)+ホイール、またはトラックパッドのピンチで拡大・縮小
+          if (!value.imagePath || !e.ctrlKey) return;
+          onChange({ scale: clampScale(value.scale * Math.exp(-e.deltaY * 0.01)) });
+        }}
+        aria-label="画像のプレビュー。ドラッグで位置、2本指で大きさを調整できます"
       >
         <ImageFrame display={value} fallbackText={name} srcOverride={value.imagePath ? src : null} />
       </div>
       <p className="hint" style={{ textAlign: 'center', marginTop: -6 }}>
-        {value.imagePath ? 'ドラッグで位置を動かせます' : '画像をえらんでください'}
+        {value.imagePath ? 'ドラッグで位置、2本指のピンチで大きさを変えられます' : '画像をえらんでください'}
       </p>
 
       <div className="row" style={{ marginBottom: 12 }}>

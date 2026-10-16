@@ -46,12 +46,12 @@ export function TodayTomorrowCards() {
           <span className={`tag${r.source === 'override' ? ' special' : ''}`}>
             {r.source === 'override' ? (r.override?.kind === 'today' ? '今日だけの変更' : r.override?.kind === 'tomorrow' ? '明日だけの変更' : '特別な日の設定') : SOURCE_LABEL[r.source]}
           </span>
-          <span className="muted">{kind === 'today' ? (p ? '適用中' : '予定は表示されません') : p ? 'この予定が適用されます' : ''}</span>
+          <span className="muted">{kind === 'today' ? (p ? '適用中' : '予定なし') : p ? 'この予定が適用されます' : ''}</span>
         </div>
         {r.conflicts.length > 0 && <div className="warn">⚠ 同じ日に別のプリセットを指す臨時変更が{r.conflicts.length}件あり、いちばん新しい設定を採用しています</div>}
         <div className="row" style={{ marginTop: 6 }}>
           <button className="btn btn-sm btn-primary" onClick={() => setPicking(kind)}>
-            {kind === 'today' ? '今日のプリセットを変更' : '明日だけ変更'}
+            {kind === 'today' ? '今日を変更' : '明日だけ変更'}
           </button>
         </div>
       </div>
