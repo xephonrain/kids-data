@@ -28,7 +28,7 @@ function Shell({ setUnlocked, onDisconnect }: { setUnlocked: (v: boolean) => voi
 
   return (
     <>
-      <MainScreen onOpenSettings={() => go('lock')} />
+      <MainScreen onOpenSettings={() => go(data.settings.lockDisabled ? 'settings' : 'lock')} />
       {view === 'lock' && (
         <LockDialog
           settings={data.settings}

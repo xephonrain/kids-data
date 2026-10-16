@@ -75,6 +75,11 @@ export interface DateOverride {
   endDate: string; // YYYY-MM-DD (含む)
   presetId: string;
   label: string;
+  /**
+   * その日だけ使う時間割(「今の時間から開始」で作る)。あるときは、プリセットの項目の代わりにこれを使う。
+   * 元のプリセットは書き換えない
+   */
+  customItems?: ScheduleItem[] | null;
   createdAt: string;
   updatedAt: string;
   version: number;
@@ -126,6 +131,8 @@ export interface AppSettings {
   lockSalt: string | null;
   lockHash: string | null;
   lockIterations: number | null;
+  /** true: パスワードなしで設定画面を開ける(ロックを使わない)。パスワード自体は残る */
+  lockDisabled: boolean;
   /** 時刻表示形式。将来の変更用 */
   timeFormat: 'kana';
   version: number;

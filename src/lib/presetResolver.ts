@@ -1,7 +1,7 @@
 // その日に使うプリセットを決める。
 // 優先順位: 1.日付指定の臨時変更 > 2.祝日用 > 3.曜日別 > 4.デフォルト
 
-import type { AppData, DateOverride, Preset } from '../types';
+import type { AppData, DateOverride, Preset, ScheduleItem } from '../types';
 import { isHoliday } from './holidays';
 import { weekdayOf } from './time';
 
@@ -73,8 +73,20 @@ export function expiredOverrides(overrides: DateOverride[], today: string): Date
  * 「今日だけ」「明日だけ」の変更を設定する。同じ日付の同種の変更は置き換え、presetIdがnullなら解除する。
  * 通常の曜日・祝日設定には触れない。
  */
-export function withDayOverride(overrides: DateOverride[], kind: 'today' | 'tomorrow', date: string, presetId: string | null, newId: string, nowIso: string): DateOverride[] {
+export function withDayOverride(overrides: DateOverride[], kind: 'today' | 'tomorrow', date: string, presetId: string | null, newId: string, nowIso: string, customItems: ScheduleItem[] | null = null): DateOverride[] {
   const rest = overrides.filter((o) => !(o.kind === kind && o.startDate === date && o.endDate === date));
   if (!presetId) return rest;
-  return [...rest, { id: newId, kind, startDate: date, endDate: date, presetId, label: kind === 'today' ? '今日だけ' : '明日だけ', createdAt: nowIso, updatedAt: nowIso, version: 0 }];
+  return [...rest, { id: newId, kind, startDate: date, endDate: date, presetId, label: kind === 'today' ? '今日だけ' : '明日だけ', customItems, createdAt: nowIso, updatedAt: nowIso, version: 0 }];
+}
+
+/**
+ * 実際に使う時間割。「今の時間から開始」で作った今日だけの時間割(customItems)があれば、
+ * 元のプリセットの項目の代わりにそれを使う。progressId は進行状況のリセット判定用
+ */
+export function effectivePreset(preset: Preset | null, override: DateOverride | null | undefined): { preset: Preset | null; progressId: string | null } {
+  if (!preset) return { preset, progressId: null };
+  if (override?.customItems && override.customItems.length > 0) {
+    return { preset: { ...preset, items: override.customItems }, progressId: `${preset.id}#${override.id}:${override.updatedAt}` };
+  }
+  return { preset, progressId: preset.id };
 }

@@ -4,6 +4,7 @@ import { useStore } from '../data/store';
 import { defaultImageDisplay, newId, nowIso } from '../defaults';
 import { hhmmToMinutes, minutesToHHMM, pad2 } from '../lib/time';
 import { sortedItems } from '../lib/schedule';
+import { setEnd, setStart } from '../lib/scheduleEdit';
 import { hasErrors, validateItems } from '../lib/validate';
 import type { Activity, FlashSetting, Preset, ScheduleItem, SwitchMode, SwitchModeSetting } from '../types';
 import { ImageEditor } from './ImageEditor';
@@ -212,6 +213,8 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
   const [confirmSave, setConfirmSave] = useState(false);
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [freeEdit, setFreeEdit] = useState<string | null>(null);
+  const [cascade, setCascade] = useState(true);
+  const [notes, setNotes] = useState<string[]>([]);
 
   const dirty = JSON.stringify({ ...p, items: sortedItems(p) }) !== JSON.stringify({ ...initial, items: sortedItems(initial) });
   const issues = useMemo(() => validateItems(p.items, data.activities), [p.items, data.activities]);
@@ -220,6 +223,12 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
   const sorted = sortedItems(p);
 
   const setItem = (id: string, patch: Partial<ScheduleItem>) => setP((x) => ({ ...x, items: x.items.map((i) => (i.id === id ? { ...i, ...patch } : i)) }));
+
+  const editTime = (id: string, which: 'start' | 'end', m: number) => {
+    const r = (which === 'start' ? setStart : setEnd)(p.items, id, m, cascade);
+    setP((x) => ({ ...x, items: r.items }));
+    setNotes(r.notes);
+  };
 
   const addItem = (kind: 'activity' | 'free') => {
     const last = sorted.length ? sorted[sorted.length - 1].endMin : 8 * 60;
@@ -305,15 +314,26 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
         </div>
       )}
 
+      <label className="row" style={{ marginBottom: 8, gap: 8 }}>
+        <input type="checkbox" checked={cascade} onChange={(e) => setCascade(e.target.checked)} />
+        <span>時刻を変えたら、以降のやることも同じ分だけ自動でずらす(長さは変わりません)</span>
+      </label>
+      {notes.length > 0 && (
+        <div style={{ marginBottom: 8 }}>
+          {notes.map((n, i) => (
+            <Banner key={i} kind="warn">{n}</Banner>
+          ))}
+        </div>
+      )}
       <div className="list">
         {sorted.map((it, idx) => {
           const bad = issues.some((x) => x.itemId === it.id && x.level === 'error');
           return (
             <div key={it.id} className={`sched-row${bad ? ' bad' : ''}`}>
               <div className="times">
-                <TimeInput label="開始時刻" minutes={it.startMin} onChange={(m) => setItem(it.id, { startMin: m })} />
+                <TimeInput label="開始時刻" minutes={it.startMin} onChange={(m) => editTime(it.id, 'start', m)} />
                 <span>〜</span>
-                <TimeInput label="終了時刻" minutes={it.endMin} allow24 onChange={(m) => setItem(it.id, { endMin: m })} />
+                <TimeInput label="終了時刻" minutes={it.endMin} allow24 onChange={(m) => editTime(it.id, 'end', m)} />
               </div>
               <div className="row">
                 <select

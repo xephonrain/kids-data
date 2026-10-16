@@ -163,6 +163,7 @@ export function settingsFromRow(r: Row): AppSettings {
     lockSalt: r.lock_salt ?? null,
     lockHash: r.lock_hash ?? null,
     lockIterations: r.lock_iterations ?? null,
+    lockDisabled: false,
     timeFormat: 'kana',
     version: r.version,
     updatedAt: r.updated_at,

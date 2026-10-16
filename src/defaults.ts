@@ -80,6 +80,7 @@ export function defaultSettings(): AppSettings {
     lockSalt: null,
     lockHash: null,
     lockIterations: null,
+    lockDisabled: false,
     timeFormat: 'kana',
     version: 0,
     updatedAt: nowIso(),

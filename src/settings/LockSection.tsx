@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { Banner } from '../components/ui';
+import { Banner, Confirm } from '../components/ui';
 import { useStore } from '../data/store';
 import { MIN_PASSWORD_LENGTH, createLock, verifyLock } from '../lib/lock';
 
@@ -9,7 +9,15 @@ export function LockSection() {
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [msg, setMsg] = useState<{ kind: 'error' | 'ok'; text: string } | null>(null);
+  const [askOff, setAskOff] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const disabled = data.settings.lockDisabled;
+  const toggleDisabled = async () => {
+    setMsg(null);
+    if (!disabled) return setAskOff(true);
+    update((d) => ({ ...d, settings: { ...d.settings, lockDisabled: !disabled } }));
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -42,6 +50,24 @@ export function LockSection() {
         <li>設定画面を閉じる・ページを再読み込みすると、自動でロックにもどります。</li>
         <li>パスワードを忘れたときの復旧方法は、README の「パスワードを忘れたとき」をご覧ください。</li>
       </ul>
+      <label className="row" style={{ gap: 8, marginTop: 12 }}>
+        <input type="checkbox" checked={disabled} onChange={() => void toggleDisabled()} />
+        <span>パスワードを無効にする(設定画面をパスワードなしで開く)</span>
+      </label>
+      {disabled && <Banner kind="warn">いまパスワードは無効です。チェックを外すと、また以前のパスワードで開くようになります。</Banner>}
+      {askOff && (
+        <Confirm
+          title="パスワードを無効にしますか?"
+          confirmLabel="無効にする"
+          danger
+          onCancel={() => setAskOff(false)}
+          onConfirm={() => {
+            update((d) => ({ ...d, settings: { ...d.settings, lockDisabled: true } }));
+            setAskOff(false);
+          }}
+          message={<p>パスワードなしで設定画面を開けるようになります。お子さまが設定を変えてしまう可能性があります。</p>}
+        />
+      )}
       <form onSubmit={submit} style={{ maxWidth: 380, marginTop: 12 }}>
         <div className="field">
           <label htmlFor="curpw">現在のパスワード</label>
