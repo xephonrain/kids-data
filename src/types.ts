@@ -133,6 +133,10 @@ export interface AppSettings {
   lockIterations: number | null;
   /** true: パスワードなしで設定画面を開ける(ロックを使わない)。パスワード自体は残る */
   lockDisabled: boolean;
+  /** 残り5分以下で黄色、1分以下で赤に「あと○ふん」の背景を変える */
+  urgencyColors: boolean;
+  /** 「おわったよ」を押したときのごほうび演出(星・音符) */
+  rewardEffect: boolean;
   /** 時刻表示形式。将来の変更用 */
   timeFormat: 'kana';
   version: number;
@@ -177,4 +181,6 @@ export interface DisplayModel {
   overtime: boolean;
   canGoBack: boolean;
   canFinish: boolean;
+  /** 次のやること(「つぎは」の予告用)。なければnull/未指定 */
+  next?: { name: string; image: ImageDisplay | null } | null;
 }

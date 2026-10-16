@@ -115,6 +115,87 @@ button:disabled {
   grid-area: art;
   min-height: 0;
   min-width: 0;
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: 0;
+}
+.kv-art-cur {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+}
+.kv-art-arrow {
+  flex: 0 0 auto;
+  align-self: center;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  font-size: 9cqmin;
+  font-weight: 900;
+  line-height: 1;
+  transition: width 0.7s ease, opacity 0.7s ease;
+}
+.kv-art-next {
+  flex: 0 1 0;
+  min-width: 0;
+  min-height: 0;
+  max-width: 0;
+  opacity: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: translateX(6cqmin) scale(0.9);
+  transition: flex-grow 0.7s ease, max-width 0.7s ease, opacity 0.7s ease, transform 0.7s ease;
+}
+.kv-art.has-next .kv-art-arrow {
+  width: 9cqmin;
+  opacity: 1;
+}
+.kv-art.has-next .kv-art-next {
+  flex: 1 1 0;
+  max-width: 100%;
+  opacity: 1;
+  transform: none;
+}
+.kv-art-next-label {
+  flex: 0 0 auto;
+  text-align: center;
+  font-weight: 800;
+  font-size: 4cqmin;
+  line-height: 1.2;
+  padding-bottom: 0.8cqmin;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kv-art-next-img {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+.kv-reward {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 15;
+}
+.kv-reward span {
+  position: absolute;
+  bottom: 14%;
+  line-height: 1;
+  opacity: 0;
+  animation: kv-pop 1.5s ease-out forwards;
+}
+@keyframes kv-pop {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0); }
+  15% { opacity: 1; transform: translate(calc(var(--dx) * 0.2), calc(var(--dy) * -0.2)) scale(1.15) rotate(calc(var(--rot) * 0.3)); }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) * -1)) scale(1) rotate(var(--rot)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kv-art-arrow, .kv-art-next { transition: none; }
+  .kv-reward span { animation-duration: 0.01s; }
 }
 .kv-buttons {
   grid-area: buttons;

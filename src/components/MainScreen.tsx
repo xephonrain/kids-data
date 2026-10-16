@@ -59,6 +59,8 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
         now={now}
         colors={data.theme.colors}
         phase={phase}
+        urgency={data.settings.urgencyColors}
+        reward={data.settings.rewardEffect}
         activity={activity}
         onBack={() => act(goBack)}
         onDone={() => act(advance)}

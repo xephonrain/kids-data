@@ -164,6 +164,8 @@ export function settingsFromRow(r: Row): AppSettings {
     lockHash: r.lock_hash ?? null,
     lockIterations: r.lock_iterations ?? null,
     lockDisabled: false,
+    urgencyColors: true,
+    rewardEffect: true,
     timeFormat: 'kana',
     version: r.version,
     updatedAt: r.updated_at,

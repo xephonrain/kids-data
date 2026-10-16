@@ -174,7 +174,13 @@ export function computeDisplay(progress: Progress, preset: Preset | null, activi
   const remainingMin = remainingMinutesFromSec(remainingSec);
   const flash = resolveFlash(item, activity);
 
+  const nextItem = items[idx + 1];
+  const nextAct = nextItem ? findActivity(activities, nextItem.activityId) : null;
+  const nextDisp = nextItem ? (nextItem.kind === 'free' ? nextItem.free : nextAct) : null;
+  const nextInfo = nextItem ? { name: nextDisp?.name ?? '', image: nextDisp ?? null } : null;
+
   return {
+    next: nextInfo,
     kind: 'item',
     name: display?.name ?? '',
     image: display,

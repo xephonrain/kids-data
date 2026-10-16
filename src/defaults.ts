@@ -81,6 +81,8 @@ export function defaultSettings(): AppSettings {
     lockHash: null,
     lockIterations: null,
     lockDisabled: false,
+    urgencyColors: true,
+    rewardEffect: true,
     timeFormat: 'kana',
     version: 0,
     updatedAt: nowIso(),

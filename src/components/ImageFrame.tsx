@@ -41,10 +41,9 @@ export function ImageFrame({ display, fallbackText, srcOverride, panelColor = '#
     <div style={{ containerType: 'size', width: '100%', height: '100%', display: 'grid', placeItems: 'center', ...style }}>
       <div
         style={{
-          aspectRatio: '1 / 1',
-          height: '100%',
-          maxWidth: '100%',
-          maxHeight: '100%',
+          // 枠のサイズは「縦横の小さい方」。横に狭いときも楕円にならず、常に正円・正方形
+          width: 'min(100cqw, 100cqh)',
+          height: 'min(100cqw, 100cqh)',
           // 枠の太さは基準サイズ400pxに対する割合で持つ → 表示サイズが変わっても見た目の比率が同じ
           boxSizing: 'border-box',
           border: `${(bw / 400) * 100}cqmin solid ${d ? rgba(d.borderColor, d.borderOpacity) : 'transparent'}`,

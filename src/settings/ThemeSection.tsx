@@ -57,6 +57,17 @@ export function ThemeSection() {
   return (
     <div className="panel">
       <h2>配色設定</h2>
+      <div className="field" style={{ marginBottom: 12 }}>
+        <label className="row" style={{ gap: 8 }}>
+          <input type="checkbox" checked={data.settings.urgencyColors} onChange={(e) => update((d) => ({ ...d, settings: { ...d.settings, urgencyColors: e.target.checked } }))} />
+          <span>残り5分以下で黄色、1分以下で赤に「あと○ふん」の色を変える(点滅の設定がある場合は点滅を優先)</span>
+        </label>
+        <label className="row" style={{ gap: 8 }}>
+          <input type="checkbox" checked={data.settings.rewardEffect} onChange={(e) => update((d) => ({ ...d, settings: { ...d.settings, rewardEffect: e.target.checked } }))} />
+          <span>「おわったよ」を押したとき、星や音符のごほうび演出を出す</span>
+        </label>
+        <p className="hint">終わりが近づくと(点滅の設定がある活動のみ)、いまの絵が左に寄って「→ つぎは○○」が出ます。</p>
+      </div>
       <p className="muted" style={{ marginBottom: 10 }}>色と透明度(0〜100%)を変えると、プレビューにすぐ反映されます。「保存」で、すべての端末に反映されます。</p>
       <div className="two-col theme-cols">
         <div className="theme-colors">
