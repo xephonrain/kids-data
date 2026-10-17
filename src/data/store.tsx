@@ -16,6 +16,8 @@ interface Store {
   gh: GhState;
   /** 設定の変更。ロック中は無視される(誤操作・不正な呼び出しの防止) */
   update: (fn: (d: AppData) => AppData) => boolean;
+  /** 子ども画面からの記録(シールをはる等)。設定のロックに関係なく書き込める。呼ぶ側は記録専用の変更だけを渡すこと */
+  record: (fn: (d: AppData) => AppData) => void;
   syncNow: () => Promise<void>;
   resolveConflict: (choice: 'remote' | 'local') => Promise<void>;
   /** 競合時に表示する、GitHub側の内容の概要 */
@@ -133,6 +135,9 @@ export function DataProvider({ github, canEdit, children }: Props) {
         if (!canEditRef.current) return false;
         engine.update(fn);
         return true;
+      },
+      record: (fn) => {
+        engine.update(fn);
       },
       syncNow: () => (sync ? sync.gs.syncNow() : Promise.resolve()),
       resolveConflict: (c) => (sync ? sync.gs.resolveConflict(c) : Promise.resolve()),

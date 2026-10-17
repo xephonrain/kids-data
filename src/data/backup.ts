@@ -1,7 +1,7 @@
 // バックアップ(JSON)の作成・検証・復元データの組み立て。画像はdata URLとして同梱する。
 // ロック用のパスワードハッシュは、バックアップに含めず、復元しても現在の値を保つ。
 
-import type { Activity, AppData, DateOverride, Preset, ScheduleItem } from '../types';
+import type { Activity, AppData, Checksheet, DateOverride, Preset, ScheduleItem, Sticker } from '../types';
 import { mergeColors } from './mappers';
 import { defaultSettings, defaultTheme } from '../defaults';
 
@@ -22,6 +22,7 @@ export function collectImagePaths(data: AppData): string[] {
   const s = new Set<string>();
   data.activities.forEach((a) => a.imagePath && s.add(a.imagePath));
   data.presets.forEach((p) => p.items.forEach((i) => i.free?.imagePath && s.add(i.free.imagePath)));
+  (data.stickers ?? []).forEach((st) => st.imagePath && s.add(st.imagePath));
   return [...s];
 }
 
@@ -68,8 +69,8 @@ export function parseBackup(text: string): BackupFile {
   };
 }
 
-export function summarizeBackup(b: BackupFile): { activities: number; presets: number; overrides: number; images: number; exportedAt: string } {
-  return { activities: b.data.activities.length, presets: b.data.presets.length, overrides: b.data.overrides.length, images: Object.keys(b.images).length, exportedAt: b.exportedAt };
+export function summarizeBackup(b: BackupFile): { activities: number; presets: number; overrides: number; checksheets: number; stickers: number; images: number; exportedAt: string } {
+  return { activities: b.data.activities.length, presets: b.data.presets.length, overrides: b.data.overrides.length, checksheets: (b.data.checksheets ?? []).length, stickers: (b.data.stickers ?? []).length, images: Object.keys(b.images).length, exportedAt: b.exportedAt };
 }
 
 /**
@@ -130,5 +131,23 @@ export function planRestore(current: AppData, backup: BackupFile, pathMap: Recor
   };
   const theme = { ...defaultTheme(), ...b.theme, colors: mergeColors(b.theme?.colors), version: current.theme.version, updatedAt: nowIso };
 
-  return { data: { activities, presets, overrides, theme, settings }, warnings };
+  // チェックシート(存在しない活動への参照は外し、項目名だけ残す)
+  const checksheets: Checksheet[] = (b.checksheets ?? []).map((c) => ({
+    ...c,
+    items: (c.items ?? []).map((i) => ({ ...i, activityId: i.activityId && actIds.has(i.activityId) ? i.activityId : null })),
+  }));
+  const stickers: Sticker[] = [];
+  for (const s of b.stickers ?? []) {
+    const path = remap(s.imagePath);
+    if (!path) {
+      warnings.push(`シール${s.name ? `「${s.name}」` : ''}の画像を復元できませんでした`);
+      continue;
+    }
+    stickers.push({ ...s, imagePath: path });
+  }
+  const stickerIds = new Set(stickers.map((s) => s.id));
+  const sheetIds = new Set(checksheets.map((c) => c.id));
+  const stickerLog = (b.stickerLog ?? []).filter((g) => stickerIds.has(g.stickerId) && sheetIds.has(g.sheetId));
+
+  return { data: { activities, presets, overrides, checksheets, stickers, stickerLog, theme, settings }, warnings };
 }

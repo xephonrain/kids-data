@@ -3,9 +3,11 @@ import { Banner } from '../components/ui';
 import { useStore } from '../data/store';
 import { ActivitiesSection } from './ActivitiesSection';
 import { BackupSection } from './BackupSection';
+import { ChecksheetSection } from './ChecksheetSection';
 import { ExtraSection } from './ExtraSection';
 import { LockSection } from './LockSection';
 import { PresetsSection } from './PresetsSection';
+import { StickerSection } from './StickerSection';
 import { SyncSection, statusLabel } from './SyncSection';
 import { ThemeSection } from './ThemeSection';
 import { TodayTomorrowCards } from './TodayTomorrowCards';
@@ -14,6 +16,8 @@ import { WeekdaySection } from './WeekdaySection';
 const TABS = [
   { id: 'activities', label: 'やること' },
   { id: 'presets', label: 'プリセット' },
+  { id: 'checksheet', label: 'チェックシート' },
+  { id: 'sticker', label: 'シール' },
   { id: 'weekday', label: '曜日・祝日' },
   { id: 'theme', label: '配色' },
   { id: 'lock', label: 'パスワード・ロック' },
@@ -62,6 +66,8 @@ export function SettingsScreen({ onClose, onDisconnect }: { onClose: () => void;
         </nav>
         {tab === 'activities' && <ActivitiesSection />}
         {tab === 'presets' && <PresetsSection />}
+        {tab === 'checksheet' && <ChecksheetSection />}
+        {tab === 'sticker' && <StickerSection />}
         {tab === 'weekday' && <WeekdaySection />}
         {tab === 'theme' && <ThemeSection />}
         {tab === 'lock' && <LockSection />}

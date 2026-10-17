@@ -7,7 +7,10 @@
 // 以降はその同じ要素で src を入れ替えて効果音を鳴らす。
 // マナーモード(消音スイッチ)がオンのときは、iPhoneでは鳴りません。
 
-export type SoundName = 'done' | 'switch' | 'flash';
+export type SoundName = 'done' | 'switch' | 'flash' | 'check1' | 'check2' | 'check3' | 'check4' | 'check5' | 'sticker';
+
+/** チェックを入れたときの効果音(ランダムに1つ) */
+export const CHECK_SOUNDS: SoundName[] = ['check1', 'check2', 'check3', 'check4', 'check5'];
 
 let audio: HTMLAudioElement | null = null;
 let silentUrl: string | null = null;

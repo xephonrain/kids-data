@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { loadProgress, saveProgress } from '../data/localCache';
+import { loadCheckDay, loadProgress, saveProgress } from '../data/localCache';
 import { useStore } from '../data/store';
 import { useFlashPhase, useNow } from '../hooks';
 import { effectivePreset, findPreset, resolvePreset } from '../lib/presetResolver';
 import { advance, computeDisplay, ensureProgress, findActivity, goBack, tick } from '../lib/schedule';
 import { dateKey, secondsOfDay } from '../lib/time';
 import type { Progress } from '../types';
+import { activeSheets, checkedIds, ensureCheckDay } from '../lib/checklist';
+import { ChecklistScreen, StickerBook } from './Checklist';
 import { KidsView } from './KidsView';
 
 const TAP_GUARD_MS = 700; // 二重タップによる連続遷移の防止
@@ -40,6 +42,16 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
   latest.current = { progress, preset, activities: data.activities, key, resolutionId: progressId };
   const guardUntil = useRef(0);
 
+  // チェックシート・シール帳(子ども向けの別画面)
+  const [panel, setPanel] = useState<null | 'check' | 'book'>(null);
+  const [highlight, setHighlight] = useState<string | undefined>(undefined);
+  const sheets = useMemo(() => activeSheets(data.checksheets, now.getDay(), Math.floor(nowSec / 60)), [data.checksheets, now, nowSec]);
+  const checkDay = ensureCheckDay(loadCheckDay(key), key);
+  const checkProgress = sheets.reduce((n, s) => n + checkedIds(checkDay, s).length, 0);
+  const checkTotal = sheets.reduce((n, s) => n + s.items.length, 0);
+  const showExtra = sheets.length > 0 || data.stickers.length > 0;
+  const openCheck = panel === 'check' && sheets.length > 0;
+
   const act = useCallback((fn: typeof advance) => {
     const t = Date.now();
     if (t < guardUntil.current) return;
@@ -54,6 +66,7 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
 
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
+      <div style={{ position: 'absolute', inset: `0 0 ${showExtra ? 60 : 0}px 0`, containerType: 'size' }}>
       <KidsView
         display={display}
         now={now}
@@ -67,6 +80,32 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
         onDone={() => act(advance)}
         onSettings={onOpenSettings}
       />
+      </div>
+      {showExtra && (
+        <div className="kv-extra">
+          {sheets.length > 0 && (
+            <button type="button" onClick={() => setPanel('check')}>
+              ✅ チェック {checkProgress}/{checkTotal}
+            </button>
+          )}
+          {data.stickers.length > 0 && (
+            <button type="button" onClick={() => setPanel('book')}>
+              📖 シールちょう
+            </button>
+          )}
+        </div>
+      )}
+      {openCheck && (
+        <ChecklistScreen
+          sheets={sheets}
+          onClose={() => setPanel(null)}
+          onOpenBook={(h) => {
+            setHighlight(h);
+            setPanel('book');
+          }}
+        />
+      )}
+      {panel === 'book' && <StickerBook highlight={highlight} onClose={() => { setHighlight(undefined); setPanel(null); }} />}
       {((mode === 'github' && gh.status === 'offline') || mode === 'local') && (
         <div className="kv-badge" role="status">
           {mode === 'local' ? 'この端末だけに保存中' : 'オフライン(保存済みの予定を表示中)'}

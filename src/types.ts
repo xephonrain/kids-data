@@ -143,10 +143,51 @@ export interface AppSettings {
   updatedAt: string;
 }
 
+/** チェックシートの項目。活動から作った場合は activityId を持ち、画像を共有する */
+export interface ChecksheetItem {
+  id: string;
+  name: string;
+  activityId: string | null;
+}
+
+/** 子ども向けのチェックシート(朝の準備など)。時間帯と曜日で表示する */
+export interface Checksheet {
+  id: string;
+  name: string;
+  items: ChecksheetItem[];
+  /** 表示する時間帯(0:00からの分) */
+  startMin: number;
+  endMin: number;
+  /** 表示する曜日(0=日〜6=土)。空なら毎日 */
+  weekdays: number[];
+  /** 全部できたらシールがもらえる */
+  rewardEnabled: boolean;
+}
+
+/** ごほうびシール。名前は後からつけられる(空でもよい) */
+export interface Sticker {
+  id: string;
+  imagePath: string;
+  name: string;
+  createdAt: string;
+}
+
+/** シールをもらった記録(シール帳の1まい) */
+export interface StickerGet {
+  id: string;
+  stickerId: string;
+  sheetId: string;
+  dateKey: string;
+  at: string;
+}
+
 export interface AppData {
   activities: Activity[];
   presets: Preset[];
   overrides: DateOverride[];
+  checksheets: Checksheet[];
+  stickers: Sticker[];
+  stickerLog: StickerGet[];
   theme: Theme;
   settings: AppSettings;
 }

@@ -121,5 +121,5 @@ export function newActivity(name = ''): Activity {
 }
 
 export function emptyAppData(): AppData {
-  return { activities: [], presets: [], overrides: [], theme: defaultTheme(), settings: defaultSettings() };
+  return { activities: [], presets: [], overrides: [], checksheets: [], stickers: [], stickerLog: [], theme: defaultTheme(), settings: defaultSettings() };
 }

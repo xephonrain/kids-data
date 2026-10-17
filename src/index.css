@@ -988,3 +988,381 @@ input[type='color'] {
     flex-wrap: wrap;
   }
 }
+
+/* ====================== シール(設定) ====================== */
+.sticker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+}
+.sticker-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  border: 1px solid #dcd8f0;
+  border-radius: 14px;
+  background: #fff;
+}
+.sticker-thumb {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  background: #f3f0fc;
+  overflow: hidden;
+  container-type: size;
+}
+.check {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+}
+
+/* ====================== チェックシート(子ども画面) ====================== */
+.kv-extra {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 60px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #f1eefb;
+}
+.kv-extra button {
+  border: 0;
+  border-radius: 14px;
+  background: #ebe8f8;
+  color: #2f2a52;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: clamp(13px, 2.4vmin, 20px);
+  min-height: 44px;
+  padding: 0 14px;
+  touch-action: manipulation;
+  box-shadow: 0 2px 0 #cfcaf0;
+}
+.cl-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: #fff;
+  color: #2f2a52;
+  display: flex;
+  flex-direction: column;
+  gap: 2vmin;
+  padding: 3vmin 3vmin 2vmin;
+  overflow: hidden;
+}
+.cl-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.cl-title {
+  background: #ebe8f8;
+  font-weight: 900;
+  font-size: clamp(22px, 5.4vmin, 44px);
+  padding: 0.6vmin 3vmin;
+  border-radius: 3vmin;
+}
+.cl-small {
+  border: 0;
+  background: #ebe8f8;
+  color: #2f2a52;
+  font-family: inherit;
+  font-weight: 700;
+  font-size: clamp(14px, 2.4vmin, 20px);
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 14px;
+  touch-action: manipulation;
+}
+.cl-tabs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.cl-tabs button {
+  border: 2px solid #dcd8f0;
+  background: #fff;
+  border-radius: 99px;
+  min-height: 44px;
+  padding: 0 16px;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: clamp(14px, 2.4vmin, 20px);
+  color: #2f2a52;
+}
+.cl-tabs button.on {
+  background: #6c63c9;
+  border-color: #6c63c9;
+  color: #fff;
+}
+.cl-stars {
+  display: flex;
+  justify-content: center;
+  gap: 1.4vmin;
+}
+.cl-stars svg {
+  width: clamp(26px, 6.5vmin, 52px);
+  height: clamp(26px, 6.5vmin, 52px);
+}
+.cl-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1.6vmin;
+  padding: 4px 2px 8px;
+}
+.cl-row {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2.4vmin;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: max(72px, 11vmin);
+  padding: 1vmin 2.4vmin 1vmin 1.6vmin;
+  border-radius: 4vmin;
+  background: #f8f7fd;
+  border: 4px solid #e4e0f5;
+  font-family: inherit;
+  color: #2f2a52;
+  text-align: left;
+  touch-action: manipulation;
+}
+.cl-row.cur {
+  background: #fff;
+  border: 6px solid #6c63c9;
+  box-shadow: 0 6px 0 #cfcaf0;
+}
+.cl-row.done {
+  background: #eef7f2;
+  border-color: #cfe8da;
+}
+.cl-row.done .cl-name,
+.cl-row.done .cl-pic {
+  opacity: 0.55;
+}
+.cl-pic {
+  flex: none;
+  width: max(56px, 9vmin);
+  height: max(56px, 9vmin);
+  container-type: size;
+}
+.cl-name {
+  flex: 1;
+  font-weight: 900;
+  font-size: clamp(20px, 4.4vmin, 38px);
+}
+.cl-mark {
+  flex: none;
+  width: max(44px, 7vmin);
+  height: max(44px, 7vmin);
+  border-radius: 50%;
+  border: 4px solid #cfcaec;
+  background: #fff;
+  display: grid;
+  place-items: center;
+}
+.cl-row.cur .cl-mark {
+  border-color: #6c63c9;
+}
+.cl-row.done .cl-mark {
+  background: #247f5a;
+  border-color: #247f5a;
+}
+.cl-mark svg {
+  width: 70%;
+  height: 70%;
+}
+.cl-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.cl-teaser {
+  background: #fff7dd;
+  border: 4px solid #f5d77a;
+  border-radius: 3vmin;
+  padding: 1vmin 2.4vmin;
+  font-weight: 900;
+  font-size: clamp(16px, 3.2vmin, 28px);
+}
+.cl-teaser.ok {
+  background: #eef7f2;
+  border-color: #cfe8da;
+}
+.cl-big {
+  border: 0;
+  background: #247f5a;
+  color: #fff;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: clamp(20px, 4.6vmin, 36px);
+  min-height: max(64px, 10vmin);
+  padding: 0 5vmin;
+  border-radius: 4vmin;
+  box-shadow: 0 6px 0 #165a3f;
+  touch-action: manipulation;
+}
+/* チェックしたときの行の動き(ランダムに1つ) */
+.cl-fx-pop { animation: cl-pop 0.7s ease-out; }
+.cl-fx-wiggle { animation: cl-wiggle 0.8s ease-in-out; }
+.cl-fx-flip { animation: cl-flip 0.9s ease-out; }
+.cl-fx-bounce { animation: cl-bounce 0.9s ease-out; }
+.cl-fx-glow { animation: cl-glow 1s ease-out; }
+@keyframes cl-pop { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
+@keyframes cl-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-3deg); } 40% { transform: rotate(3deg); } 60% { transform: rotate(-2deg); } 80% { transform: rotate(2deg); } }
+@keyframes cl-flip { from { transform: perspective(900px) rotateX(-90deg); } to { transform: perspective(900px) rotateX(0); } }
+@keyframes cl-bounce { 0% { transform: translateY(0); } 25% { transform: translateY(-14px); } 50% { transform: translateY(0); } 70% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
+@keyframes cl-glow { 0% { box-shadow: 0 0 0 0 rgba(245, 183, 0, 0.9); } 100% { box-shadow: 0 0 0 5vmin rgba(245, 183, 0, 0); } }
+/* 絵文字のはじけ */
+.cl-bursts {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 80;
+  overflow: hidden;
+}
+.cl-burst {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+.cl-burst span {
+  position: absolute;
+  line-height: 1;
+  opacity: 0;
+  animation: cl-spark 1.7s ease-out forwards;
+}
+@keyframes cl-spark {
+  0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0); }
+  18% { opacity: 1; transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5)) scale(1.2) rotate(calc(var(--rot) * 0.5)); }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 8vmin)) scale(0.9) rotate(var(--rot)); }
+}
+/* ごほうび */
+.cl-reward {
+  position: absolute;
+  inset: 0;
+  z-index: 70;
+  background: #2f2a52;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3vmin;
+  padding: 3vmin;
+  overflow: auto;
+}
+.cl-reward-banner {
+  background: #ffd23f;
+  color: #3a2e00;
+  font-weight: 900;
+  font-size: clamp(24px, 6vmin, 48px);
+  padding: 1vmin 4vmin;
+  border-radius: 4vmin;
+  animation: cl-pop 0.9s ease-out;
+}
+.cl-reward-card {
+  background: #fff;
+  border-radius: 5vmin;
+  padding: 2.4vmin;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.6vmin;
+  max-width: 92vw;
+}
+.cl-reward-img {
+  width: min(52vmin, 70vw);
+  height: min(52vmin, 70vw);
+  border-radius: 4vmin;
+  border: 8px solid #ffd23f;
+  background: #f3f0fc;
+  overflow: hidden;
+  container-type: size;
+  animation: cl-flip 1s ease-out;
+}
+.cl-reward-name {
+  font-weight: 900;
+  font-size: clamp(22px, 5vmin, 40px);
+}
+.cl-reward-no {
+  background: #ebe8f8;
+  border-radius: 2.4vmin;
+  padding: 0.6vmin 2.4vmin;
+  font-weight: 800;
+  font-size: clamp(14px, 2.8vmin, 24px);
+}
+/* シール帳 */
+.cl-book-sum {
+  font-weight: 800;
+  font-size: clamp(14px, 2.8vmin, 24px);
+  text-align: center;
+}
+.cl-book-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(30vw, 150px), 1fr));
+  gap: 2vmin;
+  align-content: start;
+  padding: 4px;
+}
+.cl-sticker {
+  background: #f8f7fd;
+  border: 3px solid #e4e0f5;
+  border-radius: 3vmin;
+  padding: 1vmin;
+  text-align: center;
+}
+.cl-sticker.new {
+  border-color: #f5b700;
+  box-shadow: 0 0 0 4px rgba(245, 183, 0, 0.35);
+  animation: cl-pop 1s ease-out;
+}
+.cl-sticker-img {
+  position: relative;
+  aspect-ratio: 1;
+  container-type: size;
+}
+.cl-sticker.locked .cl-sticker-img {
+  filter: brightness(0) opacity(0.18);
+}
+.cl-sticker-name {
+  font-weight: 800;
+  font-size: clamp(12px, 2.2vmin, 18px);
+  margin-top: 4px;
+  min-height: 1.3em;
+}
+.cl-count {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  background: #6c63c9;
+  color: #fff;
+  border-radius: 99px;
+  padding: 0 8px;
+  font-weight: 900;
+  font-size: 14px;
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*='cl-fx-'],
+  .cl-burst span,
+  .cl-sticker.new,
+  .cl-reward-banner,
+  .cl-reward-img {
+    animation-duration: 0.01s;
+  }
+}

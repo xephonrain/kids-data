@@ -59,7 +59,7 @@ export function stableStringify(v: unknown): string {
 export const hashOf = (d: AppData): string => stableStringify(normalizeAppData(d));
 
 export function isEmptyData(d: AppData): boolean {
-  return d.activities.length === 0 && d.presets.length === 0 && d.overrides.length === 0;
+  return d.activities.length === 0 && d.presets.length === 0 && d.overrides.length === 0 && (d.checksheets?.length ?? 0) === 0 && (d.stickers?.length ?? 0) === 0;
 }
 
 export function parseSnapshot(text: string): AppData {

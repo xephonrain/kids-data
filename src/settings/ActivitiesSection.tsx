@@ -26,6 +26,8 @@ export function ActivitiesSection() {
       activities: d.activities.filter((x) => x.id !== a.id),
       // その活動を使っている時間割項目も取り除く(参照整合性)
       presets: d.presets.map((p) => (p.items.some((i) => i.activityId === a.id) ? { ...p, items: p.items.filter((i) => i.activityId !== a.id) } : p)),
+      // チェックシートの項目は名前だけ残す
+      checksheets: d.checksheets.map((c) => (c.items.some((i) => i.activityId === a.id) ? { ...c, items: c.items.map((i) => (i.activityId === a.id ? { ...i, activityId: null } : i)) } : c)),
     }));
     setDeleting(null);
   };

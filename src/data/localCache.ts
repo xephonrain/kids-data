@@ -1,6 +1,7 @@
 import type { AppData, Progress } from '../types';
 import { mergeColors } from './mappers';
 import { defaultSettings, defaultTheme } from '../defaults';
+import { emptyCheckDay, ensureCheckDay, type CheckDay } from '../lib/checklist';
 import { emptyPending, type CacheStorage, type Pending } from './sync';
 
 const LAST_USER_KEY = 'kt:lastUser';
@@ -35,6 +36,9 @@ export function normalizeAppData(raw: Partial<AppData> | undefined): AppData {
     activities: v.activities ?? [],
     presets: v.presets ?? [],
     overrides: v.overrides ?? [],
+    checksheets: v.checksheets ?? [],
+    stickers: v.stickers ?? [],
+    stickerLog: v.stickerLog ?? [],
     theme: { ...defaultTheme(), ...v.theme, colors: mergeColors(v.theme?.colors) },
     settings: { ...defaultSettings(), ...v.settings },
   };
@@ -78,6 +82,25 @@ export function loadProgress(): Progress | null {
 export function saveProgress(p: Progress): void {
   try {
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  } catch {
+    /* noop */
+  }
+}
+
+// ---- チェックシートの進み具合(端末ごと、その日だけ有効) ----
+const CHECKS_KEY = 'kt:checks:v1';
+
+export function loadCheckDay(dateKey: string): CheckDay {
+  try {
+    const raw = localStorage.getItem(CHECKS_KEY);
+    return ensureCheckDay(raw ? (JSON.parse(raw) as CheckDay) : null, dateKey);
+  } catch {
+    return emptyCheckDay(dateKey);
+  }
+}
+export function saveCheckDay(d: CheckDay): void {
+  try {
+    localStorage.setItem(CHECKS_KEY, JSON.stringify(d));
   } catch {
     /* noop */
   }
