@@ -61,6 +61,7 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
         phase={phase}
         urgency={data.settings.urgencyColors}
         reward={data.settings.rewardEffect}
+        sound={data.settings.soundEffect}
         activity={activity}
         onBack={() => act(goBack)}
         onDone={() => act(advance)}

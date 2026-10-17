@@ -66,6 +66,10 @@ export function ThemeSection() {
           <input type="checkbox" checked={data.settings.rewardEffect} onChange={(e) => update((d) => ({ ...d, settings: { ...d.settings, rewardEffect: e.target.checked } }))} />
           <span>「おわったよ」を押したとき、星や音符のごほうび演出を出す</span>
         </label>
+        <label className="row" style={{ gap: 8 }}>
+          <input type="checkbox" checked={data.settings.soundEffect} onChange={(e) => update((d) => ({ ...d, settings: { ...d.settings, soundEffect: e.target.checked } }))} />
+          <span>効果音を鳴らす(おわったよ・やることが切り替わるとき。iPhoneはマナーモードだと鳴りません)</span>
+        </label>
         <p className="hint">終わりが近づくと(点滅の設定がある活動のみ)、いまの絵が左に寄って「→ つぎは○○」が出ます。</p>
       </div>
       <p className="muted" style={{ marginBottom: 10 }}>色と透明度(0〜100%)を変えると、プレビューにすぐ反映されます。「保存」で、すべての端末に反映されます。</p>

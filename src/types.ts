@@ -137,6 +137,8 @@ export interface AppSettings {
   urgencyColors: boolean;
   /** 「おわったよ」を押したときのごほうび演出(星・音符) */
   rewardEffect: boolean;
+  /** 効果音(ごほうび・切り替え) */
+  soundEffect: boolean;
   /** 時刻表示形式。将来の変更用 */
   timeFormat: 'kana';
   version: number;

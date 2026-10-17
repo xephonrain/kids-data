@@ -166,6 +166,7 @@ export function settingsFromRow(r: Row): AppSettings {
     lockDisabled: false,
     urgencyColors: true,
     rewardEffect: true,
+    soundEffect: true,
     timeFormat: 'kana',
     version: r.version,
     updatedAt: r.updated_at,

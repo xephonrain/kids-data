@@ -64,6 +64,7 @@ export function PresetSimulator({ preset, onClose }: { preset: Preset; onClose: 
               urgency={data.settings.urgencyColors}
               reward={data.settings.rewardEffect}
               noSettings
+              sound={data.settings.soundEffect}
               onDone={() => setProgress((p) => tick(advance(p, preset, sec), preset, data.activities, sec))}
               onBack={() => setProgress((p) => tick(goBack(p, preset, sec), preset, data.activities, sec))}
             />

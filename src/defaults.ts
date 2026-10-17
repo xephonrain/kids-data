@@ -83,6 +83,7 @@ export function defaultSettings(): AppSettings {
     lockDisabled: false,
     urgencyColors: true,
     rewardEffect: true,
+    soundEffect: true,
     timeFormat: 'kana',
     version: 0,
     updatedAt: nowIso(),

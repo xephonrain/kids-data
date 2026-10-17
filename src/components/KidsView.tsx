@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { defaultImageDisplay } from '../defaults';
+import { playSound } from '../lib/sound';
 import { css, mixSetting } from '../lib/color';
 import { formatClockKana } from '../lib/time';
 import type { Activity, ColorSetting, DisplayModel, ThemeColors } from '../types';
@@ -26,7 +27,11 @@ interface Props {
   reward?: boolean;
   /** 「せってい」ボタンを出さない(動作確認画面用) */
   noSettings?: boolean;
+  /** 効果音を鳴らす */
+  sound?: boolean;
 }
+
+const SWITCH_FX = ['slide', 'spin', 'zoom', 'bounce', 'flip', 'drop', 'wobble'] as const;
 
 const URGENT_YELLOW: ColorSetting = { color: '#ffd23f', opacity: 1 };
 const URGENT_RED: ColorSetting = { color: '#e5484d', opacity: 1 };
@@ -52,13 +57,13 @@ function makeBurst(seed: number): Particle[] {
     dx: r(-18, 18),
     dy: r(45, 85),
     rot: r(-40, 40),
-    delay: r(0, 0.25),
+    delay: r(0, 0.4),
     size: r(7, 13),
   }));
 }
 
 /** 子ども向けメイン画面(表示のみ)。設定画面のプレビューでも同じ部品を使う */
-export function KidsView({ display, now, colors, phase, activity, onBack, onDone, onSettings, preview, forceFlash, urgency, reward, noSettings }: Props) {
+export function KidsView({ display, now, colors, phase, activity, onBack, onDone, onSettings, preview, forceFlash, urgency, reward, noSettings, sound }: Props) {
   const flashing = display.flashing || !!forceFlash;
   const p = forceFlash && !display.flashing ? 1 : phase;
 
@@ -88,16 +93,34 @@ export function KidsView({ display, now, colors, phase, activity, onBack, onDone
   const [burst, setBurst] = useState<Particle[] | null>(null);
   const seed = useRef(0);
   const timer = useRef<number | null>(null);
+  const lastDone = useRef(0);
   useEffect(() => () => { if (timer.current) window.clearTimeout(timer.current); }, []);
   const handleDone = () => {
     if (reward && !preview && display.canFinish) {
       seed.current += 1;
       setBurst(makeBurst(seed.current));
       if (timer.current) window.clearTimeout(timer.current);
-      timer.current = window.setTimeout(() => setBurst(null), 1800);
+      timer.current = window.setTimeout(() => setBurst(null), 3300);
+    }
+    if (sound && !preview && display.canFinish) {
+      playSound('done');
+      lastDone.current = Date.now();
     }
     onDone?.();
   };
+
+  // やることが切り替わったとき: 絵にランダムな動きを付けて、やさしい音を鳴らす
+  const itemId = display.kind === 'item' ? (display.item?.id ?? null) : null;
+  const prevItem = useRef<string | null>(itemId);
+  const [fx, setFx] = useState<{ name: string; n: number } | null>(null);
+  useEffect(() => {
+    if (prevItem.current === itemId) return;
+    prevItem.current = itemId;
+    if (!itemId || preview) return; // 予定の合間や終了では出さない
+    setFx((f) => ({ name: SWITCH_FX[Math.floor(Math.random() * SWITCH_FX.length)], n: (f?.n ?? 0) + 1 }));
+    // 「おわったよ」の直後は、ごほうびの音だけにする
+    if (sound && Date.now() - lastDone.current > 2800) playSound('switch');
+  }, [itemId, preview, sound]);
   const fill = flashing ? mixSetting(colors.clockFill, colors.clockFillFlash, p) : colors.clockFill;
 
   const showHands = display.endMin !== null && display.kind !== 'done' && display.kind !== 'none';
@@ -129,7 +152,7 @@ export function KidsView({ display, now, colors, phase, activity, onBack, onDone
       </div>
 
       <div className={`kv-art${next ? ' has-next' : ''}`}>
-        <div className="kv-art-cur">
+        <div key={fx?.n ?? 0} className={`kv-art-cur${fx ? ` fx-${fx.name}` : ''}`}>
           <ImageFrame
             display={display.image ?? { ...defaultImageDisplay(), borderColor: colors.illustrationFrame.color, borderOpacity: colors.illustrationFrame.opacity }}
             fallbackText={display.name}
@@ -138,7 +161,7 @@ export function KidsView({ display, now, colors, phase, activity, onBack, onDone
         </div>
         <div className="kv-art-arrow" aria-hidden="true">→</div>
         <div className="kv-art-next" aria-hidden={!next}>
-          <div className="kv-art-next-label">つぎは「{nextShown.current?.name}」</div>
+          <div className="kv-art-next-label"><span>つぎは</span><b>{nextShown.current?.name}</b></div>
           <div className="kv-art-next-img">
             <ImageFrame
               display={nextShown.current?.image ?? { ...defaultImageDisplay(), borderColor: colors.illustrationFrame.color, borderOpacity: colors.illustrationFrame.opacity }}
