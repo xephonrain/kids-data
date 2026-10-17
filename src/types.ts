@@ -164,18 +164,10 @@ export interface Checksheet {
   rewardEnabled: boolean;
 }
 
-/** ごほうびシール。名前は後からつけられる(空でもよい) */
-export interface Sticker {
+/** 日本地図をぬった記録(1回のごほうび = 1県)。ぬる順は都道府県コード順で、記録の数から決まる */
+export interface MapGet {
   id: string;
-  imagePath: string;
-  name: string;
-  createdAt: string;
-}
-
-/** シールをもらった記録(シール帳の1まい) */
-export interface StickerGet {
-  id: string;
-  stickerId: string;
+  prefCode: number;
   sheetId: string;
   dateKey: string;
   at: string;
@@ -186,8 +178,9 @@ export interface AppData {
   presets: Preset[];
   overrides: DateOverride[];
   checksheets: Checksheet[];
-  stickers: Sticker[];
-  stickerLog: StickerGet[];
+  mapLog: MapGet[];
+  /** 県ごとの絵(任意)。キーは地図のid(例: hokkaido)、値は画像パス。未登録なら絵文字を表示 */
+  prefImages: Record<string, string>;
   theme: Theme;
   settings: AppSettings;
 }

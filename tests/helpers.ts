@@ -33,5 +33,5 @@ export function ov(id: string, start: string, end: string, presetId: string, upd
 }
 
 export function data(over: Partial<AppData> = {}): AppData {
-  return { activities: [], presets: [], overrides: [], checksheets: [], stickers: [], stickerLog: [], theme: defaultTheme(), settings: defaultSettings(), ...over };
+  return { activities: [], presets: [], overrides: [], checksheets: [], mapLog: [], prefImages: {}, theme: defaultTheme(), settings: defaultSettings(), ...over };
 }

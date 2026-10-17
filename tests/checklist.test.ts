@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { activeSheets, checkedIds, currentItemId, emptyCheckDay, ensureCheckDay, isAllDone, nextStickerNumber, pickDifferent, pickSticker, stickerCounts, toggleCheck } from '../src/lib/checklist';
+import { activeSheets, checkedIds, currentItemId, emptyCheckDay, ensureCheckDay, isAllDone, pickDifferent, toggleCheck } from '../src/lib/checklist';
+import { PREFS, PREF_COUNT, mapState, nextGet } from '../src/lib/japan';
+import { JAPAN_SHAPES } from '../src/data/japanMap';
 import { buildBackup, collectImagePaths, parseBackup, planRestore } from '../src/data/backup';
 import { normalizeAppData } from '../src/data/localCache';
 import { hashOf, isEmptyData } from '../src/data/githubSync';
 import { data } from './helpers';
-import type { Checksheet, Sticker, StickerGet } from '../src/types';
+import type { Checksheet, MapGet } from '../src/types';
 
 const sheet = (over: Partial<Checksheet> = {}): Checksheet => ({
   id: 's1',
@@ -19,8 +21,7 @@ const sheet = (over: Partial<Checksheet> = {}): Checksheet => ({
   rewardEnabled: true,
   ...over,
 });
-const st = (id: string): Sticker => ({ id, imagePath: `local/${id}.webp`, name: '', createdAt: '2026-10-18T00:00:00Z' });
-const get = (stickerId: string): StickerGet => ({ id: `g-${stickerId}-${Math.random()}`, stickerId, sheetId: 's1', dateKey: '2026-10-18', at: '2026-10-18T00:00:00Z' });
+const logN = (n: number): MapGet[] => Array.from({ length: n }, (_, i) => ({ id: `g${i}`, prefCode: (i % 47) + 1, sheetId: 's1', dateKey: '2026-10-18', at: '2026-10-18T00:00:00Z' }));
 
 describe('activeSheets', () => {
   it('時間帯・曜日で絞る(終了時刻ちょうどは含まない)', () => {
@@ -65,27 +66,49 @@ describe('チェックの進み方', () => {
   });
 });
 
-describe('ごほうびシールの選択', () => {
-  it('シールが無ければ null', () => {
-    expect(pickSticker([], [], 0.5)).toBeNull();
+describe('日本地図のデータ', () => {
+  it('47県ぶん、コードは1〜47で重複なし、地図の形(パス)がすべてある', () => {
+    expect(PREFS).toHaveLength(47);
+    expect(PREFS.map((p) => p.code)).toEqual(Array.from({ length: 47 }, (_, i) => i + 1));
+    expect(new Set(PREFS.map((p) => p.id)).size).toBe(47);
+    for (const p of PREFS) {
+      expect(JAPAN_SHAPES[p.id]?.path.length, p.id).toBeGreaterThan(50);
+      expect(p.items.length, p.id).toBeGreaterThan(0);
+      expect(p.feature.length, p.id).toBeGreaterThan(5);
+      expect(p.kana, p.id).toMatch(/^[ぁ-ん]+$/);
+    }
   });
-  it('まだ持っていないシールを優先する', () => {
-    const all = [st('a'), st('b'), st('c')];
-    const log = [get('a'), get('b')];
-    for (const r of [0, 0.3, 0.99]) expect(pickSticker(all, log, r)?.id).toBe('c');
+  it('北海道から始まり、沖縄で終わる', () => {
+    expect(PREFS[0].name).toBe('北海道');
+    expect(PREFS[46].name).toBe('沖縄');
   });
-  it('全部持っていれば全体から選ぶ。rnd=0.999でも範囲内', () => {
-    const all = [st('a'), st('b')];
-    const log = [get('a'), get('b')];
-    expect(pickSticker(all, log, 0.999)?.id).toBe('b');
-    expect(pickSticker(all, log, 0)?.id).toBe('a');
+});
+
+describe('日本地図の進み方', () => {
+  it('最初は白地図で、次は北海道', () => {
+    const s = mapState([]);
+    expect(s.filled).toEqual([]);
+    expect(s.next.name).toBe('北海道');
+    expect(s.round).toBe(1);
+    expect(s.complete).toBe(false);
   });
-  it('枚数・回数の数え方', () => {
-    const log = [get('a'), get('a'), get('b')];
-    expect(nextStickerNumber(log)).toBe(4);
-    const m = stickerCounts({ stickers: [st('a'), st('b')], stickerLog: log });
-    expect(m.get('a')).toBe(2);
-    expect(m.get('b')).toBe(1);
+  it('1回ごとに、コード順に1県ずつ増える', () => {
+    const s = mapState(logN(3));
+    expect(s.filled).toEqual([1, 2, 3]);
+    expect(s.next.code).toBe(4);
+    expect(nextGet(logN(3))).toBe(4);
+  });
+  it('47県そろうとコンプリート。次のごほうびで白にもどり2しゅうめの北海道', () => {
+    const full = mapState(logN(47));
+    expect(full.filled).toHaveLength(PREF_COUNT);
+    expect(full.complete).toBe(true);
+    expect(full.round).toBe(1);
+    expect(full.next.code).toBe(1);
+    const again = mapState(logN(48));
+    expect(again.round).toBe(2);
+    expect(again.filled).toEqual([1]);
+    expect(again.complete).toBe(false);
+    expect(again.next.code).toBe(2);
   });
 });
 
@@ -107,31 +130,31 @@ describe('データの保存・復元', () => {
   it('古いデータ(新フィールド無し)でも補完される', () => {
     const n = normalizeAppData({ activities: [], presets: [], overrides: [] } as never);
     expect(n.checksheets).toEqual([]);
-    expect(n.stickers).toEqual([]);
-    expect(n.stickerLog).toEqual([]);
+    expect(n.mapLog).toEqual([]);
+    expect(n.prefImages).toEqual({});
   });
-  it('シールだけあるデータは「空」ではない(初回接続で上書きされない)', () => {
+  it('地図の記録だけあるデータは「空」ではない(初回接続で上書きされない)', () => {
     expect(isEmptyData(data())).toBe(true);
-    expect(isEmptyData(data({ stickers: [st('a')] }))).toBe(false);
+    expect(isEmptyData(data({ mapLog: logN(1) }))).toBe(false);
     expect(isEmptyData(data({ checksheets: [sheet()] }))).toBe(false);
+    expect(isEmptyData(data({ prefImages: { tokyo: 'local/t.webp' } }))).toBe(false);
   });
-  it('ログの追加でハッシュが変わる(同期対象になる)', () => {
-    const a = data({ stickers: [st('a')] });
-    expect(hashOf(a)).not.toBe(hashOf({ ...a, stickerLog: [get('a')] }));
+  it('ぬった記録でハッシュが変わる(同期対象になる)', () => {
+    const a = data();
+    expect(hashOf(a)).not.toBe(hashOf({ ...a, mapLog: logN(1) }));
   });
-  it('シール画像は画像収集に含まれる', () => {
-    expect(collectImagePaths(data({ stickers: [st('a')] }))).toContain('local/a.webp');
+  it('県の絵は画像収集に含まれる', () => {
+    expect(collectImagePaths(data({ prefImages: { tokyo: 'local/t.webp' } }))).toContain('local/t.webp');
   });
-  it('バックアップ→復元でシール・シート・記録が戻り、存在しない参照は除かれる', async () => {
-    const d = data({ checksheets: [sheet()], stickers: [st('a'), st('b')], stickerLog: [get('a')] });
+  it('バックアップ→復元で、シート・記録・県の絵が戻り、復元できない絵は警告つきで外れる', async () => {
+    const d = data({ checksheets: [sheet()], mapLog: logN(5), prefImages: { tokyo: 'local/t.webp', osaka: 'local/o.webp' } });
     const { file } = await buildBackup(d, async (p) => `data:image/webp;base64,${p}`);
     const parsed = parseBackup(JSON.stringify(file));
-    // b の画像だけ復元できなかった場合
-    const { data: out, warnings } = planRestore(data(), parsed, { 'local/a.webp': 'local/new-a.webp' }, '2026-10-18T00:00:00Z');
+    const { data: out, warnings } = planRestore(data(), parsed, { 'local/t.webp': 'local/new-t.webp' }, '2026-10-18T00:00:00Z');
     expect(out.checksheets).toHaveLength(1);
-    expect(out.stickers.map((s) => s.imagePath)).toEqual(['local/new-a.webp']);
-    expect(out.stickerLog).toHaveLength(1);
-    expect(warnings.some((w) => w.includes('シール'))).toBe(true);
+    expect(out.mapLog).toHaveLength(5);
+    expect(out.prefImages).toEqual({ tokyo: 'local/new-t.webp' });
+    expect(warnings.some((w) => w.includes('県の絵'))).toBe(true);
   });
   it('古いバックアップ(新フィールド無し)も復元できる', () => {
     const d = data();
@@ -139,6 +162,7 @@ describe('データの保存・復元', () => {
     const parsed = parseBackup(JSON.stringify(old));
     const { data: out } = planRestore(data(), parsed, {}, '2026-10-18T00:00:00Z');
     expect(out.checksheets).toEqual([]);
-    expect(out.stickers).toEqual([]);
+    expect(out.mapLog).toEqual([]);
+    expect(out.prefImages).toEqual({});
   });
 });

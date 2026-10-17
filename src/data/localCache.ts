@@ -37,8 +37,8 @@ export function normalizeAppData(raw: Partial<AppData> | undefined): AppData {
     presets: v.presets ?? [],
     overrides: v.overrides ?? [],
     checksheets: v.checksheets ?? [],
-    stickers: v.stickers ?? [],
-    stickerLog: v.stickerLog ?? [],
+    mapLog: v.mapLog ?? [],
+    prefImages: v.prefImages ?? {},
     theme: { ...defaultTheme(), ...v.theme, colors: mergeColors(v.theme?.colors) },
     settings: { ...defaultSettings(), ...v.settings },
   };

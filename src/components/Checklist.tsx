@@ -4,11 +4,13 @@ import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties }
 import { loadCheckDay, saveCheckDay } from '../data/localCache';
 import { useStore } from '../data/store';
 import { newId } from '../defaults';
-import { checkedIds, currentItemId, ensureCheckDay, isAllDone, nextStickerNumber, pickDifferent, pickSticker, stickerCounts, stickerDisplay, toggleCheck, type CheckDay } from '../lib/checklist';
+import { checkedIds, currentItemId, ensureCheckDay, isAllDone, pickDifferent, plainImage, toggleCheck, type CheckDay } from '../lib/checklist';
+import { PREF_COUNT, mapState, nextGet, prefByCode, type Pref } from '../lib/japan';
 import { CHECK_SOUNDS, playSound } from '../lib/sound';
 import { dateKey } from '../lib/time';
 import type { Checksheet } from '../types';
 import { ImageFrame } from './ImageFrame';
+import { JapanMap } from './JapanMap';
 
 // ---- ランダムな演出 ----
 export const EMOJI_SETS: string[][] = [
@@ -71,7 +73,7 @@ function useBursts() {
 }
 
 // ---- チェックシート ----
-export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Checksheet[]; onClose: () => void; onOpenBook: (highlight?: string) => void }) {
+export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Checksheet[]; onClose: () => void; onOpenBook: () => void }) {
   const { data, record } = useStore();
   const today = dateKey(new Date());
   const [day, setDay] = useState<CheckDay>(() => loadCheckDay(today));
@@ -99,7 +101,7 @@ export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Check
   const all = isAllDone(cur, sheet);
   const reward = cur.reward[sheet.id];
   const claimed = reward?.claimed === true;
-  const canReward = sheet.rewardEnabled && data.stickers.length > 0;
+  const canReward = sheet.rewardEnabled;
 
   const onTap = (itemId: string, ev: React.MouseEvent) => {
     const was = done.has(itemId);
@@ -119,12 +121,9 @@ export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Check
     }
     const nowAll = isAllDone(next, sheet);
     if (nowAll && canReward && !next.reward[sheet.id]) {
-      const st = pickSticker(data.stickers, data.stickerLog, Math.random());
-      if (st) {
-        next = { ...next, reward: { ...next.reward, [sheet.id]: { stickerId: st.id, claimed: false } } };
-        clearTimeout(timer.current);
-        timer.current = setTimeout(() => setRewardFor(sheet.id), 1100);
-      }
+      next = { ...next, reward: { ...next.reward, [sheet.id]: { claimed: false } } };
+      clearTimeout(timer.current);
+      timer.current = setTimeout(() => setRewardFor(sheet.id), 1100);
     } else if (!nowAll && next.reward[sheet.id] && !next.reward[sheet.id].claimed) {
       const { [sheet.id]: _drop, ...rest } = next.reward;
       next = { ...next, reward: rest };
@@ -134,16 +133,12 @@ export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Check
   };
 
   const rewardSheet = rewardFor ? sheets.find((s) => s.id === rewardFor) : null;
-  const rewardInfo = rewardSheet ? cur.reward[rewardSheet.id] : null;
-  const rewardSticker = rewardInfo ? data.stickers.find((s) => s.id === rewardInfo.stickerId) : null;
 
+  /** 地図をぬる(記録は子ども画面からでも書き込める) */
   const claim = () => {
-    if (!rewardSheet || !rewardInfo || !rewardSticker) return;
-    record((d) => ({ ...d, stickerLog: [...d.stickerLog, { id: newId(), stickerId: rewardSticker.id, sheetId: rewardSheet.id, dateKey: today, at: new Date().toISOString() }] }));
-    commit({ ...cur, reward: { ...cur.reward, [rewardSheet.id]: { ...rewardInfo, claimed: true } } });
-    if (data.settings.soundEffect) playSound('sticker');
-    setRewardFor(null);
-    onOpenBook(rewardSticker.id);
+    if (!rewardSheet) return;
+    record((d) => ({ ...d, mapLog: [...d.mapLog, { id: newId(), prefCode: nextGet(d.mapLog), sheetId: rewardSheet.id, dateKey: today, at: new Date().toISOString() }] }));
+    commit({ ...cur, reward: { ...cur.reward, [rewardSheet.id]: { claimed: true } } });
   };
 
   return (
@@ -207,83 +202,142 @@ export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Check
         ) : all ? (
           <div className="cl-teaser ok">ぜんぶ できたね!</div>
         ) : canReward ? (
-          <div className="cl-teaser">ぜんぶ できたら シールが もらえるよ</div>
+          <div className="cl-teaser">ぜんぶ できたら ちずを ぬれるよ</div>
         ) : null}
-        {data.stickers.length > 0 && (
-          <button className="cl-small" onClick={() => onOpenBook()}>
-            シールちょうを みる
-          </button>
-        )}
+        <button className="cl-small" onClick={() => onOpenBook()}>
+          にほんちずを みる
+        </button>
       </div>
       <BurstLayer bursts={bursts} />
-      {rewardSheet && rewardSticker && (
-        <RewardCard stickerId={rewardSticker.id} number={nextStickerNumber(data.stickerLog)} onClaim={claim} />
-      )}
+      {rewardSheet && <RewardCard onClaim={claim} onClose={() => setRewardFor(null)} />}
     </div>
   );
 }
 
-// ---- ごほうび ----
-function RewardCard({ stickerId, number, onClaim }: { stickerId: string; number: number; onClaim: () => void }) {
+// ---- 県のカード(名産・とくしょく) ----
+export function PrefCard({ pref }: { pref: Pref }) {
   const { data } = useStore();
-  const st = data.stickers.find((s) => s.id === stickerId);
+  const img = data.prefImages[pref.id];
+  return (
+    <div className="cl-pref" data-pref={pref.id}>
+      <div className="cl-pref-pic">{img ? <ImageFrame display={plainImage(img)} fallbackText={pref.emoji} panelColor="transparent" /> : <span className="cl-pref-emoji">{pref.emoji}</span>}</div>
+      <div className="cl-pref-text">
+        <div className="cl-pref-name">
+          {pref.name}
+          <span className="cl-pref-kana">{pref.kana}</span>
+        </div>
+        <div className="cl-pref-items">
+          {pref.items.map((it) => (
+            <span key={it}>{it}</span>
+          ))}
+        </div>
+        <div className="cl-pref-feature">{pref.feature}</div>
+      </div>
+    </div>
+  );
+}
+
+// ---- ごほうび: 地図をぬる ----
+function RewardCard({ onClaim, onClose }: { onClaim: () => void; onClose: () => void }) {
+  const { data } = useStore();
+  const [claimed, setClaimed] = useState<number | null>(null);
   const { bursts, add } = useBursts();
+  const before = useRef(mapState(data.mapLog));
+  // 47県ぬり終えていたら、今回から新しい周(白地図)
+  const fresh = before.current.complete;
+  const state = mapState(data.mapLog);
+  const nextPref = before.current.next;
+  const shown = claimed != null ? state.filled : fresh ? [] : state.filled;
+  const pref = claimed != null ? prefByCode(claimed) : nextPref;
+
   useEffect(() => {
     if (data.settings.soundEffect) playSound('done');
+  }, [data.settings.soundEffect]);
+
+  const doClaim = () => {
+    onClaim();
+    setClaimed(nextPref.code);
+    if (data.settings.soundEffect) playSound('sticker');
     const w = window.innerWidth;
     const h = window.innerHeight;
-    const ids = [0, 350, 700].map((d, i) => setTimeout(() => add(w * (0.25 + 0.25 * i), h * 0.3, EMOJI_SETS[(i * 2 + Math.floor(Math.random() * 2)) % EMOJI_SETS.length]), d));
-    return () => ids.forEach(clearTimeout);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  if (!st) return null;
+    [0, 300, 600].forEach((d, i) => setTimeout(() => add(w * (0.3 + 0.2 * i), h * 0.35, EMOJI_SETS[(i * 2) % EMOJI_SETS.length]), d + 300));
+  };
+
   return (
     <div className="cl-reward" role="dialog" aria-label="ごほうび">
-      <div className="cl-reward-banner">ぜんぶ できたね!</div>
-      <div className="cl-reward-card">
-        <div className="cl-reward-img">
-          <ImageFrame display={stickerDisplay(st.imagePath)} fallbackText="シール" />
+      <div className="cl-reward-banner">{claimed != null ? `${pref?.name} を ぬったよ!` : 'ぜんぶ できたね!'}</div>
+      <div className="cl-reward-body">
+        <div className="cl-reward-map">
+          <JapanMap filled={shown} target={claimed == null ? nextPref.code : undefined} animate={claimed ?? undefined} label="日本地図" />
         </div>
-        {st.name && <div className="cl-reward-name">{st.name}</div>}
-        <div className="cl-reward-no">シールちょうの {number}まいめ</div>
+        <div className="cl-reward-side">
+          {claimed == null ? (
+            <>
+              <div className="cl-reward-ask">
+                {fresh && <div>2しゅうめ! ちずが しろに もどったよ</div>}
+                <div>
+                  きょうは <b>どこ</b>を ぬるかな?
+                </div>
+                <div className="cl-reward-hint">ひかっている ところだよ</div>
+              </div>
+              <button className="cl-big" onClick={doClaim}>
+                ちずを ぬる
+              </button>
+            </>
+          ) : (
+            <>
+              {pref && <PrefCard pref={pref} />}
+              <div className="cl-reward-no">
+                {state.complete ? 'ぜんぶ ぬれた! コンプリート!' : `${state.filled.length} / ${PREF_COUNT} けん ぬれたよ`}
+              </div>
+              <button className="cl-big" onClick={onClose}>
+                とじる
+              </button>
+            </>
+          )}
+        </div>
       </div>
-      <button className="cl-big" onClick={onClaim}>
-        シールちょうに はる
-      </button>
       <BurstLayer bursts={bursts} />
     </div>
   );
 }
 
-// ---- シール帳 ----
-export function StickerBook({ onClose, highlight }: { onClose: () => void; highlight?: string }) {
+// ---- 日本地図(ぬった県を見る) ----
+export function MapBook({ onClose, highlight }: { onClose: () => void; highlight?: number }) {
   const { data } = useStore();
-  const counts = useMemo(() => stickerCounts(data), [data]);
-  const got = data.stickers.filter((s) => counts.has(s.id)).length;
+  const st = useMemo(() => mapState(data.mapLog), [data.mapLog]);
+  const [sel, setSel] = useState<number | undefined>(highlight ?? st.filled[st.filled.length - 1]);
+  const pref = sel != null ? prefByCode(sel) : undefined;
   return (
-    <div className="cl-screen cl-book" role="dialog" aria-label="シールちょう">
+    <div className="cl-screen cl-book" role="dialog" aria-label="にほんちず">
       <div className="cl-head">
-        <div className="cl-title">シールちょう</div>
+        <div className="cl-title">にほんちず</div>
         <button className="cl-small" onClick={onClose}>
           もどる
         </button>
       </div>
       <div className="cl-book-sum">
-        あつめた {got} / {data.stickers.length}　(はったシール {data.stickerLog.length}まい)
+        ぬれた {st.filled.length} / {PREF_COUNT}　{st.round > 1 ? `(${st.round}しゅうめ)` : ''}
       </div>
-      <div className="cl-book-grid">
-        {data.stickers.map((s) => {
-          const n = counts.get(s.id) ?? 0;
-          return (
-            <div key={s.id} className={`cl-sticker${n ? '' : ' locked'}${highlight === s.id ? ' new' : ''}`} data-got={n ? '1' : '0'}>
-              <div className="cl-sticker-img">
-                <ImageFrame display={stickerDisplay(s.imagePath)} fallbackText="?" panelColor="transparent" />
-                {n > 1 && <span className="cl-count">×{n}</span>}
-              </div>
-              <div className="cl-sticker-name">{n ? s.name || ' ' : '?'}</div>
-            </div>
-          );
-        })}
+      <div className="cl-book-body">
+        <div className="cl-book-map">
+          <JapanMap filled={st.filled} selected={sel} onPick={setSel} label="日本地図" />
+        </div>
+        <div className="cl-book-side">
+          {st.filled.length === 0 && <div className="cl-teaser">チェックを ぜんぶ おわらせると、ほっかいどうから ぬれるよ</div>}
+          {pref && <PrefCard pref={pref} />}
+          <div className="cl-chips">
+            {st.filled.map((c) => {
+              const p = prefByCode(c)!;
+              return (
+                <button key={c} className={c === sel ? 'on' : ''} onClick={() => setSel(c)}>
+                  {p.emoji} {p.name}
+                </button>
+              );
+            })}
+          </div>
+          <div className="cl-credit">地図データ: @svg-maps/japan (CC BY 4.0)</div>
+        </div>
       </div>
     </div>
   );

@@ -1,9 +1,9 @@
 // チェックシートの純粋なロジック(表示判定・進み具合・ごほうびシールの選び方)。画面や保存に依存しない。
 
-import type { AppData, Checksheet, ImageDisplay, Sticker, StickerGet } from '../types';
+import type { Checksheet, ImageDisplay } from '../types';
 
-/** シール画像を、枠なしで全体が見えるように表示するための設定 */
-export const stickerDisplay = (imagePath: string, color = '#6c63c9'): ImageDisplay => ({ imagePath, shape: 'square', scale: 1, offsetX: 0, offsetY: 0, fit: 'contain', borderColor: color, borderOpacity: 0, borderWidth: 0 });
+/** 県の絵を、枠なしで全体が見えるように表示するための設定 */
+export const plainImage = (imagePath: string, color = '#6c63c9'): ImageDisplay => ({ imagePath, shape: 'square', scale: 1, offsetX: 0, offsetY: 0, fit: 'contain', borderColor: color, borderOpacity: 0, borderWidth: 0 });
 
 /** いま表示するチェックシート(曜日と時間帯で判定)。時間帯が逆(終了<開始)のものは表示しない */
 export function activeSheets(sheets: Checksheet[], weekday: number, minOfDay: number): Checksheet[] {
@@ -14,8 +14,8 @@ export function activeSheets(sheets: Checksheet[], weekday: number, minOfDay: nu
 export interface CheckDay {
   dateKey: string;
   checked: Record<string, string[]>;
-  /** 全部できたときに決まったシール(はる前でも、画面を閉じても同じシールを出すため)。はった後は 'done' */
-  reward: Record<string, { stickerId: string; claimed: boolean }>;
+  /** 全部できたシートのごほうび。claimed=地図をぬった(その日そのシートでは二度ともらえない) */
+  reward: Record<string, { claimed: boolean }>;
 }
 
 export const emptyCheckDay = (dateKey: string): CheckDay => ({ dateKey, checked: {}, reward: {} });
@@ -46,25 +46,6 @@ export function toggleCheck(day: CheckDay, sheet: Checksheet, itemId: string): C
 export function currentItemId(day: CheckDay, sheet: Checksheet): string | null {
   const done = new Set(checkedIds(day, sheet));
   return sheet.items.find((i) => !done.has(i.id))?.id ?? null;
-}
-
-/** ごほうびのシールを選ぶ。まだ持っていないものを優先し、全部持っていれば全体から選ぶ。rnd は 0以上1未満 */
-export function pickSticker(stickers: Sticker[], log: StickerGet[], rnd: number): Sticker | null {
-  if (stickers.length === 0) return null;
-  const owned = new Set(log.map((g) => g.stickerId));
-  const fresh = stickers.filter((s) => !owned.has(s.id));
-  const pool = fresh.length > 0 ? fresh : stickers;
-  return pool[Math.min(pool.length - 1, Math.floor(rnd * pool.length))];
-}
-
-/** 何枚目のシールか(これからはる分を含む) */
-export const nextStickerNumber = (log: StickerGet[]): number => log.length + 1;
-
-/** シール帳用: シールごとのもらった回数 */
-export function stickerCounts(data: Pick<AppData, 'stickers' | 'stickerLog'>): Map<string, number> {
-  const m = new Map<string, number>();
-  for (const g of data.stickerLog) m.set(g.stickerId, (m.get(g.stickerId) ?? 0) + 1);
-  return m;
 }
 
 /** 重ならないランダムな選択(直前と同じものを避ける) */

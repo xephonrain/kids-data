@@ -18,7 +18,7 @@ export function ChecksheetSection() {
     <div className="panel">
       <h2>チェックシート</h2>
       <p className="muted" style={{ marginBottom: 12 }}>
-        「あさの じゅんび」のように、子どもが1つずつチェックしていく表です。決めた時間帯だけ、メイン画面にボタンが出ます。全部チェックできると、シールがもらえます。
+        「あさの じゅんび」のように、子どもが1つずつチェックしていく表です。決めた時間帯だけ、メイン画面にボタンが出ます。全部チェックできると、日本地図を1県ぬれます。
       </p>
       <div className="row-end" style={{ marginTop: 0, marginBottom: 10 }}>
         <button className="btn btn-primary" onClick={() => setEditing({ draft: blankSheet(), isNew: true })}>
@@ -26,7 +26,6 @@ export function ChecksheetSection() {
         </button>
       </div>
       {data.checksheets.length === 0 && <Banner kind="info">まだチェックシートがありません。</Banner>}
-      {data.checksheets.length > 0 && data.stickers.length === 0 && <Banner kind="warn">ごほうびのシールが1まいもありません。「シール」タブで画像を登録すると、全部できたときにもらえます。</Banner>}
       <div className="list">
         {data.checksheets.map((c) => (
           <div key={c.id} className="list-item">
@@ -62,7 +61,7 @@ export function ChecksheetSection() {
           title="チェックシートを削除しますか？"
           danger
           confirmLabel="削除する"
-          message={<p>「{deleting.name}」を削除します。もらったシールの記録は残ります。</p>}
+          message={<p>「{deleting.name}」を削除します。地図の進み具合は残ります。</p>}
           onCancel={() => setDeleting(null)}
           onConfirm={() => {
             update((d) => ({ ...d, checksheets: d.checksheets.filter((x) => x.id !== deleting.id) }));
@@ -194,7 +193,7 @@ function SheetEditor({ initial, onSave, onCancel }: { initial: Checksheet; onSav
 
       <label className="check" style={{ marginTop: 14 }}>
         <input type="checkbox" checked={c.rewardEnabled} onChange={(ev) => setC({ ...c, rewardEnabled: ev.target.checked })} />
-        ぜんぶ できたら シールを出す
+        ぜんぶ できたら 日本地図をぬる
       </label>
       {err && <Banner kind="warn">{err}</Banner>}
     </Modal>

@@ -7,7 +7,8 @@ import { advance, computeDisplay, ensureProgress, findActivity, goBack, tick } f
 import { dateKey, secondsOfDay } from '../lib/time';
 import type { Progress } from '../types';
 import { activeSheets, checkedIds, ensureCheckDay } from '../lib/checklist';
-import { ChecklistScreen, StickerBook } from './Checklist';
+import { mapState } from '../lib/japan';
+import { ChecklistScreen, MapBook } from './Checklist';
 import { KidsView } from './KidsView';
 
 const TAP_GUARD_MS = 700; // 二重タップによる連続遷移の防止
@@ -44,12 +45,12 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
 
   // チェックシート・シール帳(子ども向けの別画面)
   const [panel, setPanel] = useState<null | 'check' | 'book'>(null);
-  const [highlight, setHighlight] = useState<string | undefined>(undefined);
+  const [highlight, setHighlight] = useState<number | undefined>(undefined);
   const sheets = useMemo(() => activeSheets(data.checksheets, now.getDay(), Math.floor(nowSec / 60)), [data.checksheets, now, nowSec]);
   const checkDay = ensureCheckDay(loadCheckDay(key), key);
   const checkProgress = sheets.reduce((n, s) => n + checkedIds(checkDay, s).length, 0);
   const checkTotal = sheets.reduce((n, s) => n + s.items.length, 0);
-  const showExtra = sheets.length > 0 || data.stickers.length > 0;
+  const showExtra = sheets.length > 0 || data.mapLog.length > 0;
   const openCheck = panel === 'check' && sheets.length > 0;
 
   const act = useCallback((fn: typeof advance) => {
@@ -88,9 +89,9 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
               ✅ チェック {checkProgress}/{checkTotal}
             </button>
           )}
-          {data.stickers.length > 0 && (
+          {(data.mapLog.length > 0 || sheets.length > 0) && (
             <button type="button" onClick={() => setPanel('book')}>
-              📖 シールちょう
+              🗾 にほんちず {mapState(data.mapLog).filled.length}/47
             </button>
           )}
         </div>
@@ -99,13 +100,13 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
         <ChecklistScreen
           sheets={sheets}
           onClose={() => setPanel(null)}
-          onOpenBook={(h) => {
-            setHighlight(h);
+          onOpenBook={() => {
+            setHighlight(undefined);
             setPanel('book');
           }}
         />
       )}
-      {panel === 'book' && <StickerBook highlight={highlight} onClose={() => { setHighlight(undefined); setPanel(null); }} />}
+      {panel === 'book' && <MapBook highlight={highlight} onClose={() => { setHighlight(undefined); setPanel(null); }} />}
       {((mode === 'github' && gh.status === 'offline') || mode === 'local') && (
         <div className="kv-badge" role="status">
           {mode === 'local' ? 'この端末だけに保存中' : 'オフライン(保存済みの予定を表示中)'}
