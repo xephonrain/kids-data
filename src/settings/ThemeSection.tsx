@@ -68,7 +68,7 @@ export function ThemeSection() {
         </label>
         <label className="row" style={{ gap: 8 }}>
           <input type="checkbox" checked={data.settings.soundEffect} onChange={(e) => update((d) => ({ ...d, settings: { ...d.settings, soundEffect: e.target.checked } }))} />
-          <span>効果音を鳴らす(おわったよ・やることが切り替わるとき。iPhoneはマナーモードだと鳴りません)</span>
+          <span>効果音を鳴らす(おわったよ・切り替わり・点滅のはじまり。iPhoneはマナーモードだと鳴りません)</span>
         </label>
         <p className="hint">終わりが近づくと(点滅の設定がある活動のみ)、いまの絵が左に寄って「→ つぎは○○」が出ます。</p>
       </div>

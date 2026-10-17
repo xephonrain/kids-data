@@ -2,7 +2,7 @@
 // iPhoneは「画面をさわった後」でないと音を出せないので、最初のタッチで準備(unlock)する。
 // マナーモード(消音スイッチ)がオンのときは、iPhoneでは鳴りません。
 
-export type SoundName = 'done' | 'switch';
+export type SoundName = 'done' | 'switch' | 'flash';
 
 let ctx: AudioContext | null = null;
 const buffers = new Map<SoundName, Promise<AudioBuffer | null>>();
@@ -58,6 +58,7 @@ export function installAudioUnlock(): void {
     }
     void load('done');
     void load('switch');
+    void load('flash');
     unlocked = true;
     window.removeEventListener('pointerdown', handler, true);
     window.removeEventListener('keydown', handler, true);

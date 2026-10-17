@@ -84,6 +84,14 @@ export function KidsView({ display, now, colors, phase, activity, onBack, onDone
     }
   }
 
+  // 点滅(終わりが近い)が始まったとき: 「ぺこぺこぺこ」
+  const wasFlashing = useRef(display.flashing);
+  useEffect(() => {
+    const was = wasFlashing.current;
+    wasFlashing.current = display.flashing;
+    if (!was && display.flashing && sound && !preview) playSound('flash');
+  }, [display.flashing, sound, preview]);
+
   // 次のやることの予告: 点滅(=終わりが近い)中だけ、いまの絵を左へ寄せて「→ つぎ」を出す
   const next = flashing && !forceFlash && display.kind === 'item' ? display.next : null;
   const nextShown = useRef(next);
