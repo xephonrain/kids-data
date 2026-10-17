@@ -1,107 +1,72 @@
-// 効果音(public/sounds/*.wav)。Web Audioで鳴らす。
-// iPhoneは「画面をさわった後」でないと音を出せないので、最初のタッチで準備(unlock)する。
+// 効果音(public/sounds/*.wav)。HTMLAudio で鳴らす。
+// iPhone(Safari / ホーム画面アプリ)は「画面をタッチした後」でないと音を出せない。
+// 最初のタッチ(どこでも)で、全部の音を無音で一度だけ再生して「解除」しておくと、
+// その後は自動切り替えのような、タッチと関係ない場面でも鳴らせる。
 // マナーモード(消音スイッチ)がオンのときは、iPhoneでは鳴りません。
-
-import { useEffect, useState } from 'react';
 
 export type SoundName = 'done' | 'switch' | 'flash';
 
-let ctx: AudioContext | null = null;
-const buffers = new Map<SoundName, Promise<AudioBuffer | null>>();
+const NAMES: SoundName[] = ['done', 'switch', 'flash'];
+const els = new Map<SoundName, HTMLAudioElement>();
+let unlockedAll = false;
 
-function getCtx(): AudioContext | null {
-  if (ctx) return ctx;
-  const AC = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-  if (!AC) return null;
-  try {
-    ctx = new AC();
-  } catch {
-    ctx = null;
+function el(name: SoundName): HTMLAudioElement | null {
+  if (typeof Audio === 'undefined') return null;
+  let a = els.get(name);
+  if (!a) {
+    a = new Audio(`${import.meta.env.BASE_URL}sounds/${name}.wav`);
+    a.preload = 'auto';
+    els.set(name, a);
   }
-  return ctx;
-}
-
-function load(name: SoundName): Promise<AudioBuffer | null> {
-  let p = buffers.get(name);
-  if (!p) {
-    p = (async () => {
-      const c = getCtx();
-      if (!c) return null;
-      try {
-        const res = await fetch(`${import.meta.env.BASE_URL}sounds/${name}.wav`);
-        if (!res.ok) return null;
-        return await c.decodeAudioData(await res.arrayBuffer());
-      } catch {
-        return null;
-      }
-    })();
-    buffers.set(name, p);
-  }
-  return p;
-}
-
-/** 音を出せる状態か(iPhoneは、画面をタッチするまで・アプリを閉じて開き直すたびに、止まっている) */
-export function isAudioRunning(): boolean {
-  return ctx?.state === 'running';
+  return a;
 }
 
 function unlock() {
-  const c = getCtx();
-  if (!c) return;
-  if (c.state !== 'running') {
-    void c.resume().catch(() => undefined);
-    // 無音を1回鳴らして iOS のロックを解除する
-    try {
-      const s = c.createBufferSource();
-      s.buffer = c.createBuffer(1, 1, 22050);
-      s.connect(c.destination);
-      s.start(0);
-    } catch {
-      /* ignore */
+  if (unlockedAll) return;
+  let pending = NAMES.length;
+  let failed = false;
+  for (const n of NAMES) {
+    const a = el(n);
+    if (!a) {
+      pending--;
+      continue;
     }
+    a.muted = true;
+    const p = a.play();
+    const done = () => {
+      a.pause();
+      a.currentTime = 0;
+      a.muted = false;
+      if (--pending === 0 && !failed) unlockedAll = true;
+    };
+    if (p && typeof p.then === 'function') {
+      p.then(done).catch(() => {
+        failed = true;
+        a.muted = false;
+        pending--;
+      });
+    } else done();
   }
-  void load('done');
-  void load('switch');
-  void load('flash');
 }
 
 let installed = false;
-/** タッチ・クリックのたびに、音を出せる状態か確かめて準備する(iPhoneはアプリを開き直すと止まるため、ずっと監視する) */
+/** どこでも最初にタッチ・クリックされたときに、音を出せる状態にする(解除できるまで毎回試す) */
 export function installAudioUnlock(): void {
   if (installed || typeof window === 'undefined') return;
   installed = true;
+  for (const n of NAMES) el(n)?.load();
   for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(ev, unlock, true);
-  document.addEventListener('visibilitychange', () => {
-    // バックグラウンドから戻ったとき、止まっていたら次のタッチで再開できるようにする
-    if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running') void ctx.resume().catch(() => undefined);
-  });
-}
-
-/** 音を出せるようになったか(画面の案内表示用)。タッチされるまで false */
-export function useAudioReady(): boolean {
-  const [ready, setReady] = useState(isAudioRunning());
-  useEffect(() => {
-    const id = window.setInterval(() => setReady(isAudioRunning()), 700);
-    return () => window.clearInterval(id);
-  }, []);
-  return ready;
 }
 
 export function playSound(name: SoundName, volume = 0.8): void {
-  const c = getCtx();
-  if (!c) return;
-  void load(name).then((buf) => {
-    if (!buf) return;
-    void c.resume().catch(() => undefined);
-    try {
-      const src = c.createBufferSource();
-      const gain = c.createGain();
-      gain.gain.value = volume;
-      src.buffer = buf;
-      src.connect(gain).connect(c.destination);
-      src.start(0);
-    } catch {
-      /* ignore */
-    }
-  });
+  const a = el(name);
+  if (!a) return;
+  try {
+    a.muted = false;
+    a.volume = volume;
+    a.currentTime = 0;
+    void a.play().catch(() => undefined);
+  } catch {
+    /* ignore */
+  }
 }

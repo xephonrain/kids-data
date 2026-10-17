@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { loadProgress, saveProgress } from '../data/localCache';
 import { useStore } from '../data/store';
 import { useFlashPhase, useNow } from '../hooks';
-import { useAudioReady } from '../lib/sound';
 import { effectivePreset, findPreset, resolvePreset } from '../lib/presetResolver';
 import { advance, computeDisplay, ensureProgress, findActivity, goBack, tick } from '../lib/schedule';
 import { dateKey, secondsOfDay } from '../lib/time';
@@ -14,7 +13,6 @@ const TAP_GUARD_MS = 700; // 二重タップによる連続遷移の防止
 export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
   const { data, gh, mode } = useStore();
   const now = useNow();
-  const audioReady = useAudioReady();
   const nowSec = secondsOfDay(now);
   const key = dateKey(now);
 
@@ -69,11 +67,6 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
         onDone={() => act(advance)}
         onSettings={onOpenSettings}
       />
-      {data.settings.soundEffect && !audioReady && (
-        <button type="button" className="kv-sound-hint" onClick={() => undefined}>
-          🔇 ここをタップすると、音が鳴るようになります
-        </button>
-      )}
       {((mode === 'github' && gh.status === 'offline') || mode === 'local') && (
         <div className="kv-badge" role="status">
           {mode === 'local' ? 'この端末だけに保存中' : 'オフライン(保存済みの予定を表示中)'}
