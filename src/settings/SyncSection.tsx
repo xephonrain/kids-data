@@ -24,6 +24,7 @@ export function SyncSection({ onDisconnect }: { onDisconnect?: () => void }) {
   const { gh, mode, syncNow, resolveConflict, remoteSummary, data } = useStore();
   const [busy, setBusy] = useState(false);
   const [code, setCode] = useState<string | null>(null);
+  const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState<'' | 'code' | 'link'>('');
   const conn = (() => {
     try {
@@ -148,6 +149,12 @@ export function SyncSection({ onDisconnect }: { onDisconnect?: () => void }) {
       ) : (
         <div className="field">
           <textarea readOnly rows={4} value={code} onFocus={(e) => e.currentTarget.select()} style={{ width: '100%', wordBreak: 'break-all' }} aria-label="ほかの端末用のコード" />
+          {qr && (
+            <div style={{ textAlign: 'center', margin: '8px 0' }}>
+              <img src={qr} alt="ほかの端末で読み取る連携QRコード" width={240} height={240} style={{ background: '#fff', borderRadius: 8 }} />
+              <p className="hint">新しい端末のカメラで読み取り、表示されたリンクを開くとつながります。GitHubへの書き込み権限が含まれるので、他の人には見せないでください。</p>
+            </div>
+          )}
           <div className="row">
             <button className="btn btn-sm btn-primary" onClick={() => void copy('link')}>
               {copied === 'link' ? 'リンクをコピーしました' : '連携リンクをコピー'}
@@ -155,7 +162,18 @@ export function SyncSection({ onDisconnect }: { onDisconnect?: () => void }) {
             <button className="btn btn-sm" onClick={() => void copy('code')}>
               {copied === 'code' ? 'コードをコピーしました' : 'コードをコピー'}
             </button>
-            <button className="btn btn-sm" onClick={() => (setCode(null), setCopied(''))}>
+            <button
+              className="btn btn-sm"
+              onClick={() => {
+                if (qr) return setQr(null);
+                void import('qrcode').then((m) =>
+                  m.toDataURL(`${location.origin}${location.pathname}#c=${code}`, { width: 360, margin: 2, errorCorrectionLevel: 'L' }).then(setQr)
+                );
+              }}
+            >
+              {qr ? 'QRコードをかくす' : 'QRコードを表示'}
+            </button>
+            <button className="btn btn-sm" onClick={() => (setCode(null), setCopied(''), setQr(null))}>
               かくす
             </button>
           </div>

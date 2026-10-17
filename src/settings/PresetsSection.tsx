@@ -8,6 +8,7 @@ import { setEnd, setStart } from '../lib/scheduleEdit';
 import { hasErrors, validateItems } from '../lib/validate';
 import type { Activity, FlashSetting, Preset, ScheduleItem, SwitchMode, SwitchModeSetting } from '../types';
 import { ImageEditor } from './ImageEditor';
+import { PresetSimulator } from './PresetSimulator';
 
 function newPreset(name: string): Preset {
   const t = nowIso();
@@ -23,6 +24,7 @@ export function PresetsSection() {
   const [editing, setEditing] = useState<{ draft: Preset; isNew: boolean } | null>(null);
   const [deleting, setDeleting] = useState<Preset | null>(null);
   const [creating, setCreating] = useState(false);
+  const [simulating, setSimulating] = useState<Preset | null>(null);
   const [newName, setNewName] = useState('');
 
   const duplicate = (p: Preset) => {
@@ -90,6 +92,9 @@ export function PresetsSection() {
               <button className="btn btn-sm" onClick={() => setEditing({ draft: structuredClone(p), isNew: false })}>
                 編集
               </button>
+              <button className="btn btn-sm" onClick={() => setSimulating(p)}>
+                動作確認
+              </button>
               <button className="btn btn-sm" onClick={() => duplicate(p)}>
                 複製
               </button>
@@ -142,6 +147,7 @@ export function PresetsSection() {
         />
       )}
 
+      {simulating && <PresetSimulator preset={simulating} onClose={() => setSimulating(null)} />}
       {deleting && (
         <Confirm
           title="プリセットを削除しますか？"
@@ -214,6 +220,7 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
   const [confirmCancel, setConfirmCancel] = useState(false);
   const [freeEdit, setFreeEdit] = useState<string | null>(null);
   const [cascade, setCascade] = useState(true);
+  const [simulating, setSimulating] = useState(false);
   const [notes, setNotes] = useState<string[]>([]);
 
   const dirty = JSON.stringify({ ...p, items: sortedItems(p) }) !== JSON.stringify({ ...initial, items: sortedItems(initial) });
@@ -279,6 +286,9 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
       onClose={tryCancel}
       footer={
         <>
+          <button className="btn" disabled={errors || p.items.length === 0} onClick={() => setSimulating(true)} style={{ marginRight: 'auto' }}>
+            動作確認
+          </button>
           <button className="btn" onClick={tryCancel}>
             キャンセル
           </button>
@@ -425,6 +435,8 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
           <ImageEditor value={freeItem.free} name={freeItem.free.name} userId={userId} onChange={(patch) => setItem(freeItem.id, { free: { ...freeItem.free!, ...patch } })} />
         </Modal>
       )}
+
+      {simulating && <PresetSimulator preset={p} onClose={() => setSimulating(false)} />}
 
       {confirmSave && (
         <Modal

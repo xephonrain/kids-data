@@ -24,6 +24,8 @@ interface Props {
   urgency?: boolean;
   /** 「おわったよ」を押したときのごほうび演出 */
   reward?: boolean;
+  /** 「せってい」ボタンを出さない(動作確認画面用) */
+  noSettings?: boolean;
 }
 
 const URGENT_YELLOW: ColorSetting = { color: '#ffd23f', opacity: 1 };
@@ -56,7 +58,7 @@ function makeBurst(seed: number): Particle[] {
 }
 
 /** 子ども向けメイン画面(表示のみ)。設定画面のプレビューでも同じ部品を使う */
-export function KidsView({ display, now, colors, phase, activity, onBack, onDone, onSettings, preview, forceFlash, urgency, reward }: Props) {
+export function KidsView({ display, now, colors, phase, activity, onBack, onDone, onSettings, preview, forceFlash, urgency, reward, noSettings }: Props) {
   const flashing = display.flashing || !!forceFlash;
   const p = forceFlash && !display.flashing ? 1 : phase;
 
@@ -179,9 +181,9 @@ export function KidsView({ display, now, colors, phase, activity, onBack, onDone
           ))}
         </div>
       )}
-      <button type="button" className="kv-settings" disabled={preview} onClick={onSettings} style={{ background: css(colors.settingsButtonBg), color: css(colors.settingsButtonText) }}>
+      {!noSettings && <button type="button" className="kv-settings" disabled={preview} onClick={onSettings} style={{ background: css(colors.settingsButtonBg), color: css(colors.settingsButtonText) }}>
         せってい
-      </button>
+      </button>}
     </div>
     </div>
   );
