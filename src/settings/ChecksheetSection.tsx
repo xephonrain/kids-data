@@ -39,6 +39,12 @@ export function ChecksheetSection() {
             <button className="btn btn-sm" onClick={() => setEditing({ draft: structuredClone(c), isNew: false })}>
               編集
             </button>
+            <button
+              className="btn btn-sm"
+              onClick={() => setEditing({ draft: { ...structuredClone(c), id: newId(), name: `${c.name}のコピー`, items: c.items.map((i) => ({ ...i, id: newId() })) }, isNew: true })}
+            >
+              複製
+            </button>
             <button className="btn btn-sm" onClick={() => setDeleting(c)}>
               削除
             </button>
@@ -79,7 +85,7 @@ function SheetEditor({ initial, onSave, onCancel }: { initial: Checksheet; onSav
   const [start, setStart] = useState(minutesToHHMM(initial.startMin));
   const [end, setEnd] = useState(minutesToHHMM(initial.endMin));
   const [newName, setNewName] = useState('');
-  const [pick, setPick] = useState('');
+  const [picks, setPicks] = useState<string[]>([]);
 
   const s = hhmmToMinutes(start);
   const e = hhmmToMinutes(end);
@@ -121,6 +127,17 @@ function SheetEditor({ initial, onSave, onCancel }: { initial: Checksheet; onSav
           <input type="text" inputMode="numeric" value={end} onChange={(ev) => setEnd(ev.target.value)} placeholder="8:00" style={{ width: 110 }} />
         </Field>
       </div>
+      <div className="row" style={{ marginBottom: 8 }}>
+        <button
+          className="btn btn-sm"
+          onClick={() => {
+            setStart('0:00');
+            setEnd('24:00');
+          }}
+        >
+          1日中 表示する
+        </button>
+      </div>
       <Field label="曜日(選ばなければ毎日)">
         <div className="row">
           {WEEKDAY_NAMES.map((n, w) => (
@@ -137,6 +154,7 @@ function SheetEditor({ initial, onSave, onCancel }: { initial: Checksheet; onSav
       </Field>
 
       <h3>チェックする項目(上から順番)</h3>
+      {c.items.length === 0 && <p className="muted">まだ項目がありません。下の「やること」から選んで追加してください。</p>}
       <div className="list">
         {c.items.map((it, i) => (
           <div key={it.id} className="list-item">
@@ -156,27 +174,39 @@ function SheetEditor({ initial, onSave, onCancel }: { initial: Checksheet; onSav
           </div>
         ))}
       </div>
-      <div className="row" style={{ marginTop: 8 }}>
-        <select aria-label="やることから追加" value={pick} onChange={(ev) => setPick(ev.target.value)}>
-          <option value="">「やること」から選ぶ…</option>
-          {data.activities.map((a) => (
-            <option key={a.id} value={a.id}>
-              {a.name}
-            </option>
-          ))}
-        </select>
-        <button
-          className="btn btn-sm"
-          disabled={!pick}
-          onClick={() => {
-            const a = data.activities.find((x) => x.id === pick);
-            if (a) setC({ ...c, items: [...c.items, { id: newId(), name: a.name, activityId: a.id }] });
-            setPick('');
-          }}
-        >
-          追加
-        </button>
-      </div>
+      <h3>「やること」を組み合わせて追加</h3>
+      {data.activities.length === 0 ? (
+        <p className="muted">「やること」タブで活動を登録すると、ここから選べます。</p>
+      ) : (
+        <>
+          <div className="row" data-testid="pick-activities">
+            {data.activities.map((a) => (
+              <label key={a.id} className="check">
+                <input type="checkbox" checked={picks.includes(a.id)} onChange={(ev) => setPicks(ev.target.checked ? [...picks, a.id] : picks.filter((x) => x !== a.id))} />
+                {a.name}
+              </label>
+            ))}
+          </div>
+          <div className="row" style={{ marginTop: 8 }}>
+            <button
+              className="btn btn-sm"
+              disabled={picks.length === 0}
+              onClick={() => {
+                // 選んだ順に、シートの末尾へ追加する
+                const add = picks.flatMap((id) => {
+                  const a = data.activities.find((x) => x.id === id);
+                  return a ? [{ id: newId(), name: a.name, activityId: a.id }] : [];
+                });
+                setC({ ...c, items: [...c.items, ...add] });
+                setPicks([]);
+              }}
+            >
+              選んだ{picks.length}こを追加
+            </button>
+            <span className="muted">チェックを入れた順に、下に足されます</span>
+          </div>
+        </>
+      )}
       <div className="row" style={{ marginTop: 8 }}>
         <input type="text" aria-label="新しい項目の名前" value={newName} onChange={(ev) => setNewName(ev.target.value)} placeholder="新しく作る(例: もちものを もつ)" />
         <button
