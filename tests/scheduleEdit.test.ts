@@ -33,3 +33,19 @@ describe('scheduleEdit', () => {
     expect(Math.max(...r.items.map((i) => i.endMin))).toBeLessThanOrEqual(1440);
   });
 });
+
+import { buildQuickItems } from '../src/lib/scheduleEdit';
+describe('buildQuickItems', () => {
+  it('選んだ順に隙間なく並べる', () => {
+    let n = 0;
+    const r = buildQuickItems([{ key: 'a', activityId: 'x', minutes: 30 }, { key: 'b', activityId: 'y', minutes: 15 }], 600, () => `n${n++}`);
+    expect(r.items.map((i) => [i.startMin, i.endMin, i.activityId])).toEqual([[600, 630, 'x'], [630, 645, 'y']]);
+  });
+  it('24:00を超える分は切り詰め・除外', () => {
+    const r = buildQuickItems([{ key: 'a', activityId: 'x', minutes: 60 }, { key: 'b', activityId: 'y', minutes: 30 }], 1420, () => 'i');
+    expect(r.items.length).toBe(1);
+    expect(r.items[0].endMin).toBe(1440);
+    expect(r.dropped).toBe(1);
+    expect(r.truncated).toBe(true);
+  });
+});

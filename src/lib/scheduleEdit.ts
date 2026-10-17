@@ -143,3 +143,33 @@ export function startFromNow(items: ScheduleItem[], nowMin: number, durations: R
   }
   return { items: out, dropped, truncated };
 }
+
+export interface QuickPick {
+  /** 画面上のキー(同じ活動を複数回えらべるよう、活動idとは別) */
+  key: string;
+  activityId: string;
+  minutes: number;
+}
+
+/**
+ * 「やることをえらんで、その場で今日の時間割を作る」: 選んだ順に、startMinから隙間なく並べる。
+ * 24:00を超える分は短くし、完全に超える分は除く。
+ */
+export function buildQuickItems(picks: QuickPick[], startMin: number, newId: () => string): { items: ScheduleItem[]; dropped: number; truncated: boolean } {
+  const items: ScheduleItem[] = [];
+  let cursor = Math.max(0, Math.min(Math.round(startMin), DAY_END - 1));
+  let dropped = 0;
+  let truncated = false;
+  for (const p of picks) {
+    const len = Math.max(1, Math.round(p.minutes));
+    if (cursor >= DAY_END) {
+      dropped++;
+      continue;
+    }
+    const end = Math.min(DAY_END, cursor + len);
+    if (end < cursor + len) truncated = true;
+    items.push({ id: newId(), startMin: cursor, endMin: end, kind: 'activity', activityId: p.activityId, free: null, flash: 'inherit', flashMinutes: null, switchMode: 'inherit' });
+    cursor = end;
+  }
+  return { items, dropped, truncated };
+}

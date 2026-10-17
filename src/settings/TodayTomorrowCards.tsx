@@ -6,9 +6,11 @@ import { useNow } from '../hooks';
 import { holidayName } from '../lib/holidays';
 import { expiredOverrides, findPreset, resolvePreset, withDayOverride, type Resolution } from '../lib/presetResolver';
 import { addDays, dateKey, formatDateJa, minutesToHHMM } from '../lib/time';
-import { lengthOf, startFromNow } from '../lib/scheduleEdit';
+import { buildQuickItems, lengthOf, startFromNow, type QuickPick } from '../lib/scheduleEdit';
 import { sortedItems } from '../lib/schedule';
 import type { Preset } from '../types';
+
+const QUICK_LABEL = 'その場で作成';
 
 const SOURCE_LABEL: Record<Resolution['source'], string> = {
   override: '臨時変更',
@@ -27,6 +29,8 @@ export function TodayTomorrowCards() {
   const [picking, setPicking] = useState<'today' | 'tomorrow' | null>(null);
   // 今日の変更の2段階目: 選んだプリセットの始め方
   const [startPick, setStartPick] = useState<{ preset: Preset; step: 'ask' | 'custom'; durations: Record<string, number> } | null>(null);
+  // その場で作る: 活動を複数えらんで、今日の時間割にする
+  const [quick, setQuick] = useState<{ picks: QuickPick[]; startMin: number } | null>(null);
   const nowMin = now.getHours() * 60 + now.getMinutes();
 
   // 期限切れの「今日だけ・明日だけ」の変更は片付ける(翌々日以降に残らない)
@@ -47,7 +51,7 @@ export function TodayTomorrowCards() {
           {formatDateJa(date)}
           {hol && <span className="tag ok" style={{ marginLeft: 8 }}>{hol}</span>}
         </div>
-        <div className="pname">{p ? p.name : '(プリセットなし)'}</div>
+        <div className="pname">{r.override?.customItems?.length && r.override.label === QUICK_LABEL ? 'その場で作った予定' : p ? p.name : '(プリセットなし)'}</div>
         <div>
           <span className={`tag${r.source === 'override' ? ' special' : ''}`}>
             {r.source === 'override' ? (r.override?.kind === 'today' ? '今日だけの変更' : r.override?.kind === 'tomorrow' ? '明日だけの変更' : '特別な日の設定') : SOURCE_LABEL[r.source]}
@@ -71,8 +75,8 @@ export function TodayTomorrowCards() {
     setPicking(null);
   };
 
-  const chooseToday = (presetId: string, customItems: import('../types').ScheduleItem[] | null) => {
-    update((d) => ({ ...d, overrides: withDayOverride(d.overrides, 'today', today, presetId, newId(), nowIso(), customItems) }));
+  const chooseToday = (presetId: string, customItems: import('../types').ScheduleItem[] | null, label?: string) => {
+    update((d) => ({ ...d, overrides: withDayOverride(d.overrides, 'today', today, presetId, newId(), nowIso(), customItems, label) }));
     setStartPick(null);
     setPicking(null);
   };
@@ -156,7 +160,99 @@ export function TodayTomorrowCards() {
           </Modal>
         );
       })()}
-      {picking && !startPick && (
+      {quick && (() => {
+        const built = buildQuickItems(quick.picks, quick.startMin, () => newId());
+        const carrier = findPreset(data, resolvePreset(today, { ...data, overrides: data.overrides.filter((o) => !(o.kind === 'today' && o.startDate === today)) }).presetId) ?? data.presets[0];
+        const sizes = [5, 10, 15, 20, 30, 45, 60, 90, 120];
+        const move = (i: number, d: number) =>
+          setQuick((q) => {
+            if (!q) return q;
+            const a = [...q.picks];
+            const j = i + d;
+            if (j < 0 || j >= a.length) return q;
+            [a[i], a[j]] = [a[j], a[i]];
+            return { ...q, picks: a };
+          });
+        return (
+          <Modal
+            title="やることをえらんで、今日の予定をその場で作る"
+            onClose={() => setQuick(null)}
+            wide
+            footer={
+              <>
+                <button className="btn" onClick={() => setQuick(null)}>
+                  やめる
+                </button>
+                <button className="btn btn-primary" disabled={built.items.length === 0 || !carrier} onClick={() => { chooseToday(carrier!.id, built.items, QUICK_LABEL); setQuick(null); }}>
+                  この内容で開始
+                </button>
+              </>
+            }
+          >
+            <p className="muted" style={{ marginTop: 0 }}>やることをタップすると下に追加されます(同じものを何度でも)。長さと順番を決めると、開始時刻から続けて並びます。</p>
+            <div className="row" style={{ flexWrap: 'wrap', gap: 6, marginBottom: 10 }}>
+              {data.activities.map((a) => (
+                <button key={a.id} className="btn btn-sm" onClick={() => setQuick((q) => q && { ...q, picks: [...q.picks, { key: newId(), activityId: a.id, minutes: 30 }] })}>
+                  ＋ {a.name}
+                </button>
+              ))}
+            </div>
+            <label className="row" style={{ gap: 8, marginBottom: 8 }}>
+              <span>開始時刻</span>
+              <input
+                type="time"
+                value={minutesToHHMM(quick.startMin)}
+                onChange={(e) => {
+                  const [h, m] = e.target.value.split(':').map(Number);
+                  if (Number.isFinite(h) && Number.isFinite(m)) setQuick((q) => q && { ...q, startMin: h * 60 + m });
+                }}
+              />
+              <button className="btn btn-sm" onClick={() => setQuick((q) => q && { ...q, startMin: nowMin })}>
+                今の時間にする
+              </button>
+            </label>
+            {quick.picks.length === 0 ? (
+              <Banner kind="info">まだ何もえらんでいません。上のボタンでやることを追加してください。</Banner>
+            ) : (
+              <div className="list">
+                {quick.picks.map((p, i) => {
+                  const act = data.activities.find((a) => a.id === p.activityId);
+                  const it = built.items[i];
+                  return (
+                    <div key={p.key} className="row" style={{ justifyContent: 'space-between', gap: 6 }}>
+                      <span>
+                        <b>{act?.name ?? '(活動なし)'}</b>
+                        <span className="hint"> {it ? `${minutesToHHMM(it.startMin)}〜${minutesToHHMM(it.endMin)}` : '(24時を超えるため除外)'}</span>
+                      </span>
+                      <span className="row" style={{ gap: 4 }}>
+                        <select aria-label={`${act?.name ?? 'やること'}の長さ`} value={p.minutes} onChange={(e) => setQuick((q) => q && { ...q, picks: q.picks.map((x, k) => (k === i ? { ...x, minutes: Number(e.target.value) } : x)) })}>
+                          {sizes.map((m) => (
+                            <option key={m} value={m}>
+                              {m}分
+                            </option>
+                          ))}
+                        </select>
+                        <button className="btn btn-sm" aria-label="上へ" disabled={i === 0} onClick={() => move(i, -1)}>
+                          ↑
+                        </button>
+                        <button className="btn btn-sm" aria-label="下へ" disabled={i === quick.picks.length - 1} onClick={() => move(i, 1)}>
+                          ↓
+                        </button>
+                        <button className="btn btn-sm" aria-label="削除" onClick={() => setQuick((q) => q && { ...q, picks: q.picks.filter((_, k) => k !== i) })}>
+                          ✕
+                        </button>
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            {(built.dropped > 0 || built.truncated) && <Banner kind="warn">夜12時を超える分は、短くしたり除いたりされます。</Banner>}
+            <p className="hint">この予定は今日だけです。プリセットは変わりません。</p>
+          </Modal>
+        );
+      })()}
+      {picking && !startPick && !quick && (
         <Modal
           title={picking === 'today' ? `今日(${formatDateJa(today)})のプリセットを変更` : `明日(${formatDateJa(tomorrow)})だけ別のプリセットにする`}
           onClose={() => setPicking(null)}
@@ -181,6 +277,16 @@ export function TodayTomorrowCards() {
           </Banner>
           <p className="muted">通常は「{normal?.name ?? 'なし'}」です。</p>
           {data.presets.length === 0 && <Banner kind="warn">プリセットがありません。先に「プリセット」で作ってください。</Banner>}
+          {picking === 'today' && (
+            <button
+              className="btn btn-primary"
+              style={{ marginBottom: 8 }}
+              disabled={data.activities.length === 0 || data.presets.length === 0}
+              onClick={() => setQuick({ picks: [], startMin: nowMin })}
+            >
+              ＋ やることをえらんで、その場で作る
+            </button>
+          )}
           <div className="list">
             {data.presets.map((p) => (
               <button key={p.id} className="btn" style={{ textAlign: 'left', borderColor: current?.presetId === p.id ? '#6c63c9' : undefined, borderWidth: current?.presetId === p.id ? 2 : 1 }} onClick={() => (picking === 'today' ? setStartPick({ preset: p, step: 'ask', durations: {} }) : choose(picking, p.id))}>
