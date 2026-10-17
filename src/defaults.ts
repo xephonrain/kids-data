@@ -80,7 +80,6 @@ export function defaultSettings(): AppSettings {
     lockSalt: null,
     lockHash: null,
     lockIterations: null,
-    lockDisabled: false,
     urgencyColors: true,
     rewardEffect: true,
     soundEffect: true,

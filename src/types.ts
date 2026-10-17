@@ -131,8 +131,6 @@ export interface AppSettings {
   lockSalt: string | null;
   lockHash: string | null;
   lockIterations: number | null;
-  /** true: パスワードなしで設定画面を開ける(ロックを使わない)。パスワード自体は残る */
-  lockDisabled: boolean;
   /** 残り5分以下で黄色、1分以下で赤に「あと○ふん」の背景を変える */
   urgencyColors: boolean;
   /** 「おわったよ」を押したときのごほうび演出(星・音符) */

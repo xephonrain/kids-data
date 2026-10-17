@@ -1,3 +1,4 @@
+import { isLockOff } from './deviceLock';
 import { createContext, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react';
 import type { AppData } from '../types';
 import { collectImagePaths } from './backup';
@@ -91,7 +92,7 @@ export function DataProvider({ github, canEdit, children }: Props) {
 
   const canEditRef = useRef(canEdit);
   // パスワード未設定の間は(初回のパスワード登録のため)編集を許可する
-  canEditRef.current = canEdit || !data.settings.lockHash || data.settings.lockDisabled;
+  canEditRef.current = canEdit || !data.settings.lockHash || isLockOff();
 
   // GitHub接続中: 起動時・画面に戻ったとき・通信回復時・一定間隔で同期
   useEffect(() => {

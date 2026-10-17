@@ -34,7 +34,7 @@ export async function buildBackup(data: AppData, toDataUrl: (path: string) => Pr
     else missing.push(p);
   }
   const clean: AppData = structuredClone(data);
-  clean.settings = { ...clean.settings, lockSalt: null, lockHash: null, lockIterations: null, lockDisabled: false };
+  clean.settings = { ...clean.settings, lockSalt: null, lockHash: null, lockIterations: null };
   return { file: { format: BACKUP_FORMAT, version: BACKUP_VERSION, exportedAt: new Date().toISOString(), data: clean, images }, missingImages: missing };
 }
 
@@ -125,7 +125,6 @@ export function planRestore(current: AppData, backup: BackupFile, pathMap: Recor
     lockSalt: current.settings.lockSalt,
     lockHash: current.settings.lockHash,
     lockIterations: current.settings.lockIterations,
-    lockDisabled: current.settings.lockDisabled,
     version: current.settings.version,
     updatedAt: nowIso,
   };

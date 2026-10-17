@@ -163,7 +163,6 @@ export function settingsFromRow(r: Row): AppSettings {
     lockSalt: r.lock_salt ?? null,
     lockHash: r.lock_hash ?? null,
     lockIterations: r.lock_iterations ?? null,
-    lockDisabled: false,
     urgencyColors: true,
     rewardEffect: true,
     soundEffect: true,

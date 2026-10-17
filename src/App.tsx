@@ -3,6 +3,7 @@ import { LockDialog } from './components/LockDialog';
 import { SetupScreen } from './components/SetupScreen';
 import { MainScreen } from './components/MainScreen';
 import { clearConnection, loadConnection, type Connection } from './data/github';
+import { useLockOff } from './data/deviceLock';
 import { DataProvider, useStore } from './data/store';
 import { SettingsScreen } from './settings/SettingsScreen';
 
@@ -16,6 +17,7 @@ type View = 'main' | 'lock' | 'settings';
 function Shell({ setUnlocked, onDisconnect }: { setUnlocked: (v: boolean) => void; onDisconnect?: () => void }) {
   const { data, update } = useStore();
   const [view, setView] = useState<View>('main');
+  const lockOff = useLockOff();
 
   const go = useCallback(
     (v: View) => {
@@ -28,7 +30,7 @@ function Shell({ setUnlocked, onDisconnect }: { setUnlocked: (v: boolean) => voi
 
   return (
     <>
-      <MainScreen onOpenSettings={() => go(data.settings.lockDisabled ? 'settings' : 'lock')} />
+      <MainScreen onOpenSettings={() => go(lockOff ? 'settings' : 'lock')} />
       {view === 'lock' && (
         <LockDialog
           settings={data.settings}

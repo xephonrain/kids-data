@@ -2,6 +2,8 @@
 // iPhoneは「画面をさわった後」でないと音を出せないので、最初のタッチで準備(unlock)する。
 // マナーモード(消音スイッチ)がオンのときは、iPhoneでは鳴りません。
 
+import { useEffect, useState } from 'react';
+
 export type SoundName = 'done' | 'switch' | 'flash';
 
 let ctx: AudioContext | null = null;
@@ -38,33 +40,51 @@ function load(name: SoundName): Promise<AudioBuffer | null> {
   return p;
 }
 
-let unlocked = false;
-/** 最初のタッチ・クリックで音を出せる状態にする(一度だけ) */
-export function installAudioUnlock(): void {
-  if (unlocked || typeof window === 'undefined') return;
-  const handler = () => {
-    const c = getCtx();
-    if (!c) return;
+/** 音を出せる状態か(iPhoneは、画面をタッチするまで・アプリを閉じて開き直すたびに、止まっている) */
+export function isAudioRunning(): boolean {
+  return ctx?.state === 'running';
+}
+
+function unlock() {
+  const c = getCtx();
+  if (!c) return;
+  if (c.state !== 'running') {
     void c.resume().catch(() => undefined);
     // 無音を1回鳴らして iOS のロックを解除する
     try {
-      const b = c.createBuffer(1, 1, 22050);
       const s = c.createBufferSource();
-      s.buffer = b;
+      s.buffer = c.createBuffer(1, 1, 22050);
       s.connect(c.destination);
       s.start(0);
     } catch {
       /* ignore */
     }
-    void load('done');
-    void load('switch');
-    void load('flash');
-    unlocked = true;
-    window.removeEventListener('pointerdown', handler, true);
-    window.removeEventListener('keydown', handler, true);
-  };
-  window.addEventListener('pointerdown', handler, true);
-  window.addEventListener('keydown', handler, true);
+  }
+  void load('done');
+  void load('switch');
+  void load('flash');
+}
+
+let installed = false;
+/** タッチ・クリックのたびに、音を出せる状態か確かめて準備する(iPhoneはアプリを開き直すと止まるため、ずっと監視する) */
+export function installAudioUnlock(): void {
+  if (installed || typeof window === 'undefined') return;
+  installed = true;
+  for (const ev of ['pointerdown', 'touchend', 'click', 'keydown']) window.addEventListener(ev, unlock, true);
+  document.addEventListener('visibilitychange', () => {
+    // バックグラウンドから戻ったとき、止まっていたら次のタッチで再開できるようにする
+    if (document.visibilityState === 'visible' && ctx && ctx.state !== 'running') void ctx.resume().catch(() => undefined);
+  });
+}
+
+/** 音を出せるようになったか(画面の案内表示用)。タッチされるまで false */
+export function useAudioReady(): boolean {
+  const [ready, setReady] = useState(isAudioRunning());
+  useEffect(() => {
+    const id = window.setInterval(() => setReady(isAudioRunning()), 700);
+    return () => window.clearInterval(id);
+  }, []);
+  return ready;
 }
 
 export function playSound(name: SoundName, volume = 0.8): void {

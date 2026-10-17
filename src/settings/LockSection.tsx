@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Banner, Confirm } from '../components/ui';
+import { setLockOff, useLockOff } from '../data/deviceLock';
 import { useStore } from '../data/store';
 import { MIN_PASSWORD_LENGTH, createLock, verifyLock } from '../lib/lock';
 
@@ -12,11 +13,11 @@ export function LockSection() {
   const [askOff, setAskOff] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const disabled = data.settings.lockDisabled;
+  const disabled = useLockOff();
   const toggleDisabled = async () => {
     setMsg(null);
     if (!disabled) return setAskOff(true);
-    update((d) => ({ ...d, settings: { ...d.settings, lockDisabled: !disabled } }));
+    setLockOff(false);
   };
 
   const submit = async (e: FormEvent) => {
@@ -52,20 +53,20 @@ export function LockSection() {
       </ul>
       <label className="row" style={{ gap: 8, marginTop: 12 }}>
         <input type="checkbox" checked={disabled} onChange={() => void toggleDisabled()} />
-        <span>パスワードを無効にする(設定画面をパスワードなしで開く)</span>
+        <span>この端末ではパスワードを使わない(設定画面をパスワードなしで開く)</span>
       </label>
-      {disabled && <Banner kind="warn">いまパスワードは無効です。チェックを外すと、また以前のパスワードで開くようになります。</Banner>}
+      {disabled && <Banner kind="warn">この端末ではパスワードが無効です。ほかの端末には影響しません。チェックを外すと、この端末もパスワードで開くようになります。</Banner>}
       {askOff && (
         <Confirm
-          title="パスワードを無効にしますか?"
+          title="この端末のパスワードを無効にしますか?"
           confirmLabel="無効にする"
           danger
           onCancel={() => setAskOff(false)}
           onConfirm={() => {
-            update((d) => ({ ...d, settings: { ...d.settings, lockDisabled: true } }));
+            setLockOff(true);
             setAskOff(false);
           }}
-          message={<p>パスワードなしで設定画面を開けるようになります。お子さまが設定を変えてしまう可能性があります。</p>}
+          message={<p>この端末だけ、パスワードなしで設定画面を開けるようになります(ほかの端末はそのままです)。お子さまが設定を変えてしまう可能性があります。</p>}
         />
       )}
       <form onSubmit={submit} style={{ maxWidth: 380, marginTop: 12 }}>
