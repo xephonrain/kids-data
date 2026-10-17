@@ -3,7 +3,7 @@ import { Banner, Confirm, Field, Modal } from '../components/ui';
 import { useStore } from '../data/store';
 import { defaultImageDisplay, newId, nowIso } from '../defaults';
 import { hhmmToMinutes, minutesToHHMM, pad2 } from '../lib/time';
-import { sortedItems } from '../lib/schedule';
+import { resolveSwitchMode, sortedItems } from '../lib/schedule';
 import { setEnd, setStart } from '../lib/scheduleEdit';
 import { hasErrors, validateItems } from '../lib/validate';
 import type { Activity, FlashSetting, Preset, ScheduleItem, SwitchMode, SwitchModeSetting } from '../types';
@@ -338,6 +338,11 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
       <div className="list">
         {sorted.map((it, idx) => {
           const bad = issues.some((x) => x.itemId === it.id && x.level === 'error');
+          // 「活動に合わせる」を選んだとき、実際にどうなるかを文字で見せる(内容を記載)
+          const act = it.activityId ? (data.activities.find((a) => a.id === it.activityId) ?? null) : null;
+          const inhFlashMin = act?.flashMinutes ?? 5;
+          const inhFlashText = act?.flashEnabled ? `点滅する・終了${inhFlashMin}分前から` : '点滅しない';
+          const inhSwitch = resolveSwitchMode({ ...it, switchMode: 'inherit' }, act, p) === 'auto' ? '自動で切り替え' : 'おわったよで切り替え';
           return (
             <div key={it.id} className={`sched-row${bad ? ' bad' : ''}`}>
               <div className="times">
@@ -376,7 +381,7 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
                 <label className="unit">
                   点滅{' '}
                   <select value={it.flash} onChange={(e) => setItem(it.id, { flash: e.target.value as FlashSetting })}>
-                    <option value="inherit">活動の設定に合わせる</option>
+                    <option value="inherit">活動に合わせる({inhFlashText})</option>
                     <option value="on">オン</option>
                     <option value="off">オフ</option>
                   </select>
@@ -389,7 +394,7 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
                       className="num"
                       min={1}
                       max={1440}
-                      placeholder="活動"
+                      placeholder={String(inhFlashMin)}
                       value={it.flashMinutes ?? ''}
                       onChange={(e) => setItem(it.id, { flashMinutes: e.target.value === '' ? null : Math.max(1, Math.min(1440, Math.round(Number(e.target.value)) || 1)) })}
                     />{' '}
@@ -399,7 +404,7 @@ function PresetEditor({ initial, isNew, onSave, onCancel }: { initial: Preset; i
                 <label className="unit">
                   切り替え{' '}
                   <select value={it.switchMode} onChange={(e) => setItem(it.id, { switchMode: e.target.value as SwitchModeSetting })}>
-                    <option value="inherit">活動・プリセットに合わせる</option>
+                    <option value="inherit">活動・プリセットに合わせる({inhSwitch})</option>
                     <option value="auto">自動</option>
                     <option value="manual">おわったよで</option>
                   </select>
