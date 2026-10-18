@@ -1267,14 +1267,7 @@ input[type='color'] {
   font-size: clamp(14px, 2.8vmin, 24px);
   text-align: center;
 }
-@media (prefers-reduced-motion: reduce) {
-  [class*='cl-fx-'],
-  .cl-burst span,
-  .cl-reward-banner,
-  .cl-reward-img {
-    animation-duration: 0.01s;
-  }
-}
+/* チェックのエフェクトはこのアプリの主役なので、「視差効果を減らす」設定でも止めない */
 
 /* ====================== 日本地図 ====================== */
 .jm {
