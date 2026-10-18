@@ -18,7 +18,7 @@ export function ChecksheetSection() {
     <div className="panel">
       <h2>チェックシート</h2>
       <p className="muted" style={{ marginBottom: 12 }}>
-        「あさの じゅんび」のように、子どもが1つずつチェックしていく表です。決めた時間帯だけ、メイン画面にボタンが出ます。全部チェックできると、日本地図を1県ぬれます。
+        「あさの じゅんび」のように、子どもが1つずつチェックしていく表です。アプリを開いたときに「チェックリスト」から選べます。下の時間帯・曜日に合うシートが先に並びます。全部チェックできると、日本地図を1県ぬれます。
       </p>
       <div className="row-end" style={{ marginTop: 0, marginBottom: 10 }}>
         <button className="btn btn-primary" onClick={() => setEditing({ draft: blankSheet(), isNew: true })}>
@@ -120,10 +120,10 @@ function SheetEditor({ initial, onSave, onCancel }: { initial: Checksheet; onSav
         <input type="text" value={c.name} onChange={(ev) => setC({ ...c, name: ev.target.value })} placeholder="あさの じゅんび" />
       </Field>
       <div className="row">
-        <Field label="表示をはじめる時間">
+        <Field label="おすすめの時間(はじめ)">
           <input type="text" inputMode="numeric" value={start} onChange={(ev) => setStart(ev.target.value)} placeholder="6:30" style={{ width: 110 }} />
         </Field>
-        <Field label="表示を終わる時間">
+        <Field label="おすすめの時間(おわり)">
           <input type="text" inputMode="numeric" value={end} onChange={(ev) => setEnd(ev.target.value)} placeholder="8:00" style={{ width: 110 }} />
         </Field>
       </div>
@@ -135,10 +135,10 @@ function SheetEditor({ initial, onSave, onCancel }: { initial: Checksheet; onSav
             setEnd('24:00');
           }}
         >
-          1日中 表示する
+          1日中 おすすめ
         </button>
       </div>
-      <Field label="曜日(選ばなければ毎日)">
+      <Field label="おすすめの曜日(選ばなければ毎日)">
         <div className="row">
           {WEEKDAY_NAMES.map((n, w) => (
             <label key={w} className="check">

@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { loadCheckDay, loadProgress, saveProgress } from '../data/localCache';
+import { loadProgress, saveProgress } from '../data/localCache';
 import { useStore } from '../data/store';
 import { useFlashPhase, useNow } from '../hooks';
 import { effectivePreset, findPreset, resolvePreset } from '../lib/presetResolver';
 import { advance, computeDisplay, ensureProgress, findActivity, goBack, tick } from '../lib/schedule';
 import { dateKey, secondsOfDay } from '../lib/time';
 import type { Progress } from '../types';
-import { activeSheets, checkedIds, ensureCheckDay } from '../lib/checklist';
-import { mapState } from '../lib/japan';
+import { activeSheets } from '../lib/checklist';
 import { ChecklistScreen, MapBook } from './Checklist';
 import { KidsView } from './KidsView';
 
@@ -43,15 +42,15 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
   latest.current = { progress, preset, activities: data.activities, key, resolutionId: progressId };
   const guardUntil = useRef(0);
 
-  // チェックシート・シール帳(子ども向けの別画面)
-  const [panel, setPanel] = useState<null | 'check' | 'book'>(null);
-  const [highlight, setHighlight] = useState<number | undefined>(undefined);
-  const sheets = useMemo(() => activeSheets(data.checksheets, now.getDay(), Math.floor(nowSec / 60)), [data.checksheets, now, nowSec]);
-  const checkDay = ensureCheckDay(loadCheckDay(key), key);
-  const checkProgress = sheets.reduce((n, s) => n + checkedIds(checkDay, s).length, 0);
-  const checkTotal = sheets.reduce((n, s) => n + s.items.length, 0);
-  const showExtra = sheets.length > 0 || data.mapLog.length > 0;
-  const openCheck = panel === 'check' && sheets.length > 0;
+  // 画面: 起動時に「スケジュール / チェックリスト」を選ぶ。完全に別の画面として扱う
+  const [view, setView] = useState<'select' | 'schedule' | 'check'>('select');
+  const [book, setBook] = useState(false);
+  // チェックリストは全部のシートから選べる。今の時間帯・曜日に合うものを先に並べる
+  const sheets = useMemo(() => {
+    const all = data.checksheets.filter((c) => c.items.length > 0);
+    const rec = new Set(activeSheets(all, now.getDay(), Math.floor(nowSec / 60)).map((c) => c.id));
+    return [...all.filter((c) => rec.has(c.id)), ...all.filter((c) => !rec.has(c.id))];
+  }, [data.checksheets, now, nowSec]);
 
   const act = useCallback((fn: typeof advance) => {
     const t = Date.now();
@@ -65,9 +64,24 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
     saveProgress(next);
   }, []);
 
+  const badge = ((mode === 'github' && gh.status === 'offline') || mode === 'local') && (
+    <div className="kv-badge" role="status">
+      {mode === 'local' ? 'この端末だけに保存中' : 'オフライン(保存済みの予定を表示中)'}
+    </div>
+  );
+
+  if (view === 'select') return <StartScreen hasSheets={sheets.length > 0} onPick={setView} onSettings={onOpenSettings} badge={badge} />;
+
+  if (view === 'check')
+    return (
+      <>
+        <ChecklistScreen sheets={sheets} onSwitch={() => setView('schedule')} onSettings={onOpenSettings} onOpenBook={() => setBook(true)} />
+        {book && <MapBook onClose={() => setBook(false)} />}
+      </>
+    );
+
   return (
     <div style={{ position: 'fixed', inset: 0 }}>
-      <div style={{ position: 'absolute', inset: `0 0 ${showExtra ? 60 : 0}px 0`, containerType: 'size' }}>
       <KidsView
         display={display}
         now={now}
@@ -81,37 +95,36 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
         onDone={() => act(advance)}
         onSettings={onOpenSettings}
       />
+      <div className="mode-bar">
+        <button type="button" className="mode-switch" onClick={() => setView('check')}>
+          ✅ チェックリスト
+        </button>
+        {badge}
       </div>
-      {showExtra && (
-        <div className="kv-extra">
-          {sheets.length > 0 && (
-            <button type="button" onClick={() => setPanel('check')}>
-              ✅ チェック {checkProgress}/{checkTotal}
-            </button>
-          )}
-          {(data.mapLog.length > 0 || sheets.length > 0) && (
-            <button type="button" onClick={() => setPanel('book')}>
-              🗾 にほんちず {mapState(data.mapLog).filled.length}/47
-            </button>
-          )}
-        </div>
-      )}
-      {openCheck && (
-        <ChecklistScreen
-          sheets={sheets}
-          onClose={() => setPanel(null)}
-          onOpenBook={() => {
-            setHighlight(undefined);
-            setPanel('book');
-          }}
-        />
-      )}
-      {panel === 'book' && <MapBook highlight={highlight} onClose={() => { setHighlight(undefined); setPanel(null); }} />}
-      {((mode === 'github' && gh.status === 'offline') || mode === 'local') && (
-        <div className="kv-badge" role="status">
-          {mode === 'local' ? 'この端末だけに保存中' : 'オフライン(保存済みの予定を表示中)'}
-        </div>
-      )}
+    </div>
+  );
+}
+
+/** 起動したときの画面。スケジュールかチェックリストを選ぶ */
+function StartScreen({ hasSheets, onPick, onSettings, badge }: { hasSheets: boolean; onPick: (v: 'schedule' | 'check') => void; onSettings: () => void; badge: React.ReactNode }) {
+  return (
+    <div className="start" role="main">
+      <button type="button" className="start-settings" onClick={onSettings}>
+        せってい
+      </button>
+      <div className="start-title">どっちを みる?</div>
+      <div className="start-choices">
+        <button type="button" className="start-card schedule" onClick={() => onPick('schedule')}>
+          <span className="start-icon">⏰</span>
+          <span>スケジュール</span>
+        </button>
+        <button type="button" className="start-card check" onClick={() => onPick('check')}>
+          <span className="start-icon">✅</span>
+          <span>チェックリスト</span>
+          {!hasSheets && <span className="start-note">まだ ありません</span>}
+        </button>
+      </div>
+      {badge}
     </div>
   );
 }

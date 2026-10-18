@@ -73,7 +73,7 @@ function useBursts() {
 }
 
 // ---- チェックシート ----
-export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Checksheet[]; onClose: () => void; onOpenBook: () => void }) {
+export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { sheets: Checksheet[]; onSwitch: () => void; onSettings: () => void; onOpenBook: () => void }) {
   const { data, record } = useStore();
   const today = dateKey(new Date());
   const [day, setDay] = useState<CheckDay>(() => loadCheckDay(today));
@@ -95,7 +95,20 @@ export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Check
     saveCheckDay(next);
   };
 
-  if (!sheet) return null;
+  if (!sheet)
+    return (
+      <div className="cl-screen" role="dialog" aria-label="チェックリスト">
+        <div className="cl-head">
+          <button className="cl-small" onClick={onSwitch}>
+            ⏰ スケジュール
+          </button>
+          <button className="cl-small" onClick={onSettings}>
+            せってい
+          </button>
+        </div>
+        <div className="cl-teaser">チェックリストが まだ ありません。「せってい」でつくってね</div>
+      </div>
+    );
   const done = new Set(checkedIds(cur, sheet));
   const currentId = currentItemId(cur, sheet);
   const all = isAllDone(cur, sheet);
@@ -144,10 +157,15 @@ export function ChecklistScreen({ sheets, onClose, onOpenBook }: { sheets: Check
   return (
     <div className="cl-screen" role="dialog" aria-label="チェックシート">
       <div className="cl-head">
-        <div className="cl-title">{sheet.name}</div>
-        <button className="cl-small" onClick={onClose}>
-          もどる
+        <button className="cl-small" onClick={onSwitch}>
+          ⏰ スケジュール
         </button>
+        <button className="cl-small" onClick={onSettings}>
+          せってい
+        </button>
+      </div>
+      <div className="cl-title-row">
+        <div className="cl-title">{sheet.name}</div>
       </div>
       {sheets.length > 1 && (
         <div className="cl-tabs" role="tablist">

@@ -1497,3 +1497,108 @@ input[type='color'] {
     max-height: none;
   }
 }
+
+/* ====================== 起動画面・切り替え ====================== */
+.mode-bar {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.mode-bar .kv-badge {
+  position: static;
+}
+.mode-switch {
+  border: 0;
+  border-radius: 12px;
+  background: #ebe8f8;
+  color: #2f2a52;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: clamp(13px, 2.2vmin, 18px);
+  min-height: 38px;
+  padding: 0 12px;
+  touch-action: manipulation;
+  box-shadow: 0 2px 0 #cfcaf0;
+}
+.cl-title-row {
+  display: flex;
+  justify-content: center;
+}
+.start {
+  position: fixed;
+  inset: 0;
+  background: linear-gradient(160deg, #f4f1ff, #eaf7f0);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4vmin;
+  padding: 4vmin;
+}
+.start-settings {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: 0;
+  border-radius: 12px;
+  background: #ebe8f8;
+  color: #2f2a52;
+  font-family: inherit;
+  font-weight: 800;
+  font-size: 15px;
+  min-height: 40px;
+  padding: 0 14px;
+}
+.start-title {
+  font-weight: 900;
+  font-size: clamp(26px, 6vmin, 48px);
+  color: #2f2a52;
+}
+.start-choices {
+  display: flex;
+  gap: 4vmin;
+  width: 100%;
+  max-width: 900px;
+  flex-direction: column;
+}
+.start-card {
+  flex: 1;
+  border: 0;
+  border-radius: 6vmin;
+  min-height: 24vmin;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1vmin;
+  font-family: inherit;
+  font-weight: 900;
+  font-size: clamp(24px, 6vmin, 48px);
+  color: #fff;
+  box-shadow: 0 8px 0 rgba(0, 0, 0, 0.2);
+  touch-action: manipulation;
+}
+.start-card.schedule {
+  background: #6c63c9;
+}
+.start-card.check {
+  background: #247f5a;
+}
+.start-icon {
+  font-size: 1.6em;
+  line-height: 1;
+}
+.start-note {
+  font-size: 0.4em;
+  font-weight: 700;
+  opacity: 0.9;
+}
+@media (orientation: landscape) {
+  .start-choices {
+    flex-direction: row;
+  }
+}
