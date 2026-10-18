@@ -1640,3 +1640,8 @@ input[type='color'] {
 .cl-pick-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
 .cl-pick-list button { border: 2px solid #dcd8f0; background: #fff; border-radius: 14px; min-height: 56px; padding: 0 16px; font-family: inherit; font-weight: 800; font-size: clamp(16px, 3vmin, 24px); color: #2f2a52; text-align: left; }
 .cl-pick-list button.on { background: #6c63c9; border-color: #6c63c9; color: #fff; }
+
+.cl-pref-slot { display: grid; width: 100%; }
+.cl-pref-slot > * { grid-area: 1 / 1; min-width: 0; }
+.cl-pref-ghosts { display: grid; visibility: hidden; pointer-events: none; }
+.cl-pref-ghosts > * { grid-area: 1 / 1; }

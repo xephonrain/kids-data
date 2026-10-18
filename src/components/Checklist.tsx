@@ -5,7 +5,7 @@ import { CHECKS_EVENT, loadCheckDay, saveCheckDay } from '../data/localCache';
 import { useStore } from '../data/store';
 import { newId } from '../defaults';
 import { checkedIds, currentItemId, ensureCheckDay, isAllDone, pickDifferent, plainImage, toggleCheck, type CheckDay } from '../lib/checklist';
-import { CAPITALS, PREF_COUNT, mapState, nextGet, prefByCode, type Pref } from '../lib/japan';
+import { CAPITALS, PREF_COUNT, PREFS, mapState, nextGet, prefByCode, type Pref } from '../lib/japan';
 import { CHECK_SOUNDS, playSound } from '../lib/sound';
 import { dateKey } from '../lib/time';
 import type { Checksheet } from '../types';
@@ -263,10 +263,24 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
 
 // ---- 県のカード(名産・とくしょく) ----
 export function PrefCard({ pref }: { pref: Pref }) {
-  const { data } = useStore();
-  const img = data.prefImages[pref.id];
+  // 県ごとに文章の長さが違っても枠の高さが変わらないよう、全県ぶんを透明に重ねて一番大きい枠に合わせる
   return (
-    <div className="cl-pref" data-pref={pref.id}>
+    <div className="cl-pref-slot">
+      <PrefCardView pref={pref} />
+      <div className="cl-pref-ghosts" aria-hidden="true" inert>
+        {PREFS.map((p) => (
+          <PrefCardView key={p.id} pref={p} ghost />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PrefCardView({ pref, ghost }: { pref: Pref; ghost?: boolean }) {
+  const { data } = useStore();
+  const img = ghost ? undefined : data.prefImages[pref.id];
+  return (
+    <div className="cl-pref" data-pref={ghost ? undefined : pref.id}>
       <div className="cl-pref-pic">{img ? <ImageFrame display={plainImage(img)} fallbackText={pref.emoji} panelColor="transparent" /> : <span className="cl-pref-emoji">{pref.emoji}</span>}</div>
       <div className="cl-pref-text">
         <div className="cl-pref-name">
