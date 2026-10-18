@@ -3,6 +3,7 @@ import { Banner } from '../components/ui';
 import { useStore } from '../data/store';
 import { ActivitiesSection } from './ActivitiesSection';
 import { BackupSection } from './BackupSection';
+import { CheckItemsSection } from './CheckItemsSection';
 import { ChecksheetSection } from './ChecksheetSection';
 import { JapanSection } from './JapanSection';
 import { ExtraSection } from './ExtraSection';
@@ -16,7 +17,8 @@ import { WeekdaySection } from './WeekdaySection';
 const TABS = [
   { id: 'activities', label: 'やること' },
   { id: 'presets', label: 'プリセット' },
-  { id: 'checksheet', label: 'チェックシート' },
+  { id: 'checkitems', label: 'チェック項目' },
+  { id: 'checksheet', label: 'チェックリスト' },
   { id: 'map', label: '日本地図' },
   { id: 'weekday', label: '曜日・祝日' },
   { id: 'theme', label: '配色' },
@@ -66,6 +68,7 @@ export function SettingsScreen({ onClose, onDisconnect }: { onClose: () => void;
         </nav>
         {tab === 'activities' && <ActivitiesSection />}
         {tab === 'presets' && <PresetsSection />}
+        {tab === 'checkitems' && <CheckItemsSection />}
         {tab === 'checksheet' && <ChecksheetSection />}
         {tab === 'map' && <JapanSection />}
         {tab === 'weekday' && <WeekdaySection />}

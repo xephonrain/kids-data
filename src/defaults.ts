@@ -1,4 +1,4 @@
-import type { Activity, AppData, AppSettings, ImageDisplay, Theme, ThemeColors, ThemeKey } from './types';
+import type { Activity, AppData, CheckItem, AppSettings, ImageDisplay, Theme, ThemeColors, ThemeKey } from './types';
 
 export const DEFAULT_COLORS: ThemeColors = {
   background: { color: '#ffffff', opacity: 100 },
@@ -121,5 +121,9 @@ export function newActivity(name = ''): Activity {
 }
 
 export function emptyAppData(): AppData {
-  return { activities: [], presets: [], overrides: [], checksheets: [], mapLog: [], prefImages: {}, theme: defaultTheme(), settings: defaultSettings() };
+  return { activities: [], presets: [], overrides: [], checkItems: [], checksheets: [], mapLog: [], prefImages: {}, theme: defaultTheme(), settings: defaultSettings() };
+}
+
+export function newCheckItem(name = ''): CheckItem {
+  return { ...defaultImageDisplay(), id: newId(), name };
 }

@@ -6,7 +6,6 @@ import { effectivePreset, findPreset, resolvePreset } from '../lib/presetResolve
 import { advance, computeDisplay, ensureProgress, findActivity, goBack, tick } from '../lib/schedule';
 import { dateKey, secondsOfDay } from '../lib/time';
 import type { Progress } from '../types';
-import { activeSheets } from '../lib/checklist';
 import { ChecklistScreen, MapBook } from './Checklist';
 import { KidsView } from './KidsView';
 
@@ -45,12 +44,11 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
   // 画面: 起動時に「スケジュール / チェックリスト」を選ぶ。完全に別の画面として扱う
   const [view, setView] = useState<'select' | 'schedule' | 'check'>('select');
   const [book, setBook] = useState(false);
-  // チェックリストは全部のシートから選べる。今の時間帯・曜日に合うものを先に並べる
+  // チェックリストは登録済みの全シートから選べる(項目が1つもないシートは出さない)
   const sheets = useMemo(() => {
-    const all = data.checksheets.filter((c) => c.items.length > 0);
-    const rec = new Set(activeSheets(all, now.getDay(), Math.floor(nowSec / 60)).map((c) => c.id));
-    return [...all.filter((c) => rec.has(c.id)), ...all.filter((c) => !rec.has(c.id))];
-  }, [data.checksheets, now, nowSec]);
+    const ids = new Set(data.checkItems.map((i) => i.id));
+    return data.checksheets.map((c) => ({ ...c, itemIds: c.itemIds.filter((id) => ids.has(id)) })).filter((c) => c.itemIds.length > 0);
+  }, [data.checksheets, data.checkItems]);
 
   const act = useCallback((fn: typeof advance) => {
     const t = Date.now();

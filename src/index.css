@@ -1602,3 +1602,30 @@ input[type='color'] {
     flex-direction: row;
   }
 }
+
+.check-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 8px;
+}
+.check-pick {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #dcd8f0;
+  border-radius: 12px;
+  padding: 6px 10px;
+  font-weight: 700;
+  background: #fff;
+  cursor: pointer;
+}
+.check-pick.on {
+  border-color: #6c63c9;
+  background: #f1eefb;
+}
+.pick-pic {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  container-type: size;
+}

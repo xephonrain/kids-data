@@ -1,7 +1,7 @@
 // 子ども向け: チェックシート / ごほうび / シール帳。チェックするたびに、演出と効果音をランダムに組み合わせて出す。
 
 import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { loadCheckDay, saveCheckDay } from '../data/localCache';
+import { CHECKS_EVENT, loadCheckDay, saveCheckDay } from '../data/localCache';
 import { useStore } from '../data/store';
 import { newId } from '../defaults';
 import { checkedIds, currentItemId, ensureCheckDay, isAllDone, pickDifferent, plainImage, toggleCheck, type CheckDay } from '../lib/checklist';
@@ -86,6 +86,11 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
   const lastFx = useRef(-1);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   useEffect(() => () => clearTimeout(timer.current), []);
+  useEffect(() => {
+    const reload = () => setDay(loadCheckDay(dateKey(new Date())));
+    window.addEventListener(CHECKS_EVENT, reload);
+    return () => window.removeEventListener(CHECKS_EVENT, reload);
+  }, []);
 
   const sheet = sheets.find((s) => s.id === sheetId) ?? sheets[0];
   const cur = ensureCheckDay(day, today);
@@ -109,6 +114,7 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
         <div className="cl-teaser">チェックリストが まだ ありません。「せってい」でつくってね</div>
       </div>
     );
+  const items = sheet.itemIds.flatMap((id) => data.checkItems.find((i) => i.id === id) ?? []);
   const done = new Set(checkedIds(cur, sheet));
   const currentId = currentItemId(cur, sheet);
   const all = isAllDone(cur, sheet);
@@ -176,16 +182,15 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
           ))}
         </div>
       )}
-      <div className="cl-stars" role="img" aria-label={`${sheet.items.length}つのうち${done.size}つできた`}>
-        {sheet.items.map((it) => (
+      <div className="cl-stars" role="img" aria-label={`${items.length}つのうち${done.size}つできた`}>
+        {items.map((it) => (
           <svg key={it.id} viewBox="0 0 24 24" aria-hidden="true">
             <polygon points="12,2 15,9 22,9.5 16.5,14 18.5,21 12,17 5.5,21 7.5,14 2,9.5 9,9" fill={done.has(it.id) ? '#f5b700' : '#ffffff'} stroke={done.has(it.id) ? '#d99a00' : '#c9c4e6'} strokeWidth="1.2" strokeLinejoin="round" />
           </svg>
         ))}
       </div>
       <div className="cl-rows">
-        {sheet.items.map((it) => {
-          const act = it.activityId ? data.activities.find((a) => a.id === it.activityId) : null;
+        {items.map((it) => {
           const isDone = done.has(it.id);
           const isCur = it.id === currentId;
           return (
@@ -198,7 +203,7 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
               onClick={(e) => onTap(it.id, e)}
             >
               <span className="cl-pic">
-                <ImageFrame display={act ? { ...act, borderWidth: 5 } : null} fallbackText={it.name.slice(0, 3)} />
+                <ImageFrame display={{ ...it, borderWidth: Math.min(it.borderWidth, 8) }} fallbackText={it.name.slice(0, 3)} />
               </span>
               <span className="cl-name">{it.name}</span>
               <span className="cl-mark">

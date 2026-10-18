@@ -5,11 +5,6 @@ import type { Checksheet, ImageDisplay } from '../types';
 /** 県の絵を、枠なしで全体が見えるように表示するための設定 */
 export const plainImage = (imagePath: string, color = '#6c63c9'): ImageDisplay => ({ imagePath, shape: 'square', scale: 1, offsetX: 0, offsetY: 0, fit: 'contain', borderColor: color, borderOpacity: 0, borderWidth: 0 });
 
-/** いま表示するチェックシート(曜日と時間帯で判定)。時間帯が逆(終了<開始)のものは表示しない */
-export function activeSheets(sheets: Checksheet[], weekday: number, minOfDay: number): Checksheet[] {
-  return sheets.filter((s) => s.items.length > 0 && (s.weekdays.length === 0 || s.weekdays.includes(weekday)) && s.startMin <= minOfDay && minOfDay < s.endMin);
-}
-
 /** その日のチェック状態(端末ごと)。シートIDごとにチェック済みの項目IDを持つ */
 export interface CheckDay {
   dateKey: string;
@@ -27,12 +22,12 @@ export function ensureCheckDay(v: CheckDay | null | undefined, dateKey: string):
 }
 
 export function checkedIds(day: CheckDay, sheet: Checksheet): string[] {
-  const valid = new Set(sheet.items.map((i) => i.id));
+  const valid = new Set(sheet.itemIds);
   return (day.checked[sheet.id] ?? []).filter((id) => valid.has(id));
 }
 
 export function isAllDone(day: CheckDay, sheet: Checksheet): boolean {
-  return sheet.items.length > 0 && checkedIds(day, sheet).length === sheet.items.length;
+  return sheet.itemIds.length > 0 && checkedIds(day, sheet).length === sheet.itemIds.length;
 }
 
 /** チェックを入れる/外す(もう一度タップで外せる) */
@@ -45,7 +40,7 @@ export function toggleCheck(day: CheckDay, sheet: Checksheet, itemId: string): C
 /** 次に「いま取り組む」項目(最初の未チェック) */
 export function currentItemId(day: CheckDay, sheet: Checksheet): string | null {
   const done = new Set(checkedIds(day, sheet));
-  return sheet.items.find((i) => !done.has(i.id))?.id ?? null;
+  return sheet.itemIds.find((id) => !done.has(id)) ?? null;
 }
 
 /** 重ならないランダムな選択(直前と同じものを避ける) */

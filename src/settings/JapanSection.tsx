@@ -4,12 +4,17 @@ import { Banner, Confirm } from '../components/ui';
 import { deleteImage, uploadImage } from '../data/images';
 import { useStore } from '../data/store';
 import { plainImage } from '../lib/checklist';
-import { PREFS, PREF_COUNT, mapState, type Pref } from '../lib/japan';
+import { loadCheckDay, saveCheckDay } from '../data/localCache';
+import { PREFS, PREF_COUNT, mapState, prefByCode, type Pref } from '../lib/japan';
+import { dateKey } from '../lib/time';
 
 export function JapanSection() {
   const { data, update, userId } = useStore();
   const st = mapState(data.mapLog);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [confirmUndo, setConfirmUndo] = useState(false);
+  const last = data.mapLog[data.mapLog.length - 1];
+  const lastPref = last ? prefByCode(last.prefCode) : undefined;
   const [msg, setMsg] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const target = useRef<Pref | null>(null);
@@ -56,6 +61,9 @@ export function JapanSection() {
         いまの進み具合: <b>{st.filled.length} / {PREF_COUNT}</b> 県{st.round > 1 ? `(${st.round}しゅうめ)` : ''} ・ これまでのごほうび {data.mapLog.length}回 ・ 次は <b>{st.complete ? `${PREFS[0].name}(白にもどる)` : st.next.name}</b>
       </p>
       <div className="row-end" style={{ marginTop: 0, marginBottom: 10 }}>
+        <button className="btn btn-sm" disabled={!last} onClick={() => setConfirmUndo(true)}>
+          ひとつ もどす{lastPref ? `(${lastPref.name})` : ''}
+        </button>
         <button className="btn btn-sm" disabled={data.mapLog.length === 0} onClick={() => setConfirmReset(true)}>
           地図を白にもどす
         </button>
@@ -96,6 +104,23 @@ export function JapanSection() {
         地図データ: <a href="https://github.com/VictorCazanave/svg-maps" target="_blank" rel="noreferrer">@svg-maps/japan</a> (Victor Cazanave, CC BY 4.0)
       </p>
 
+      {confirmUndo && last && (
+        <Confirm
+          title="ひとつ もどしますか？"
+          confirmLabel="もどす"
+          message={<p>最後にぬった「{lastPref?.name}」を白にもどします。{last.dateKey === dateKey(new Date()) ? 'きょうの同じリストは、もう一度ごほうびをもらえるようになります(この端末の分)。' : ''}</p>}
+          onCancel={() => setConfirmUndo(false)}
+          onConfirm={() => {
+            if (update((d) => ({ ...d, mapLog: d.mapLog.slice(0, -1) })) && last.dateKey === dateKey(new Date())) {
+              // きょうのごほうびを取り消した場合は、もらい直せるようにする
+              const day = loadCheckDay(last.dateKey);
+              const { [last.sheetId]: _drop, ...rest } = day.reward;
+              saveCheckDay({ ...day, reward: rest });
+            }
+            setConfirmUndo(false);
+          }}
+        />
+      )}
       {confirmReset && (
         <Confirm
           title="地図を白にもどしますか？"

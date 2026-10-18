@@ -143,24 +143,19 @@ export interface AppSettings {
   updatedAt: string;
 }
 
-/** チェックシートの項目。活動から作った場合は activityId を持ち、画像を共有する */
-export interface ChecksheetItem {
+/** チェックする項目(「やること」とは別に、単体で登録する)。画像の表示設定は活動と同じ */
+export interface CheckItem extends ImageDisplay {
   id: string;
   name: string;
-  activityId: string | null;
 }
 
-/** 子ども向けのチェックシート(朝の準備など)。時間帯と曜日で表示する */
+/** 子ども向けのチェックリスト(朝の準備など)。登録済みのチェック項目を選んで作る */
 export interface Checksheet {
   id: string;
   name: string;
-  items: ChecksheetItem[];
-  /** 表示する時間帯(0:00からの分) */
-  startMin: number;
-  endMin: number;
-  /** 表示する曜日(0=日〜6=土)。空なら毎日 */
-  weekdays: number[];
-  /** 全部できたらシールがもらえる */
+  /** 並べるチェック項目のID(上から順) */
+  itemIds: string[];
+  /** 全部できたら日本地図を1県ぬれる */
   rewardEnabled: boolean;
 }
 
@@ -177,6 +172,7 @@ export interface AppData {
   activities: Activity[];
   presets: Preset[];
   overrides: DateOverride[];
+  checkItems: CheckItem[];
   checksheets: Checksheet[];
   mapLog: MapGet[];
   /** 県ごとの絵(任意)。キーは地図のid(例: hokkaido)、値は画像パス。未登録なら絵文字を表示 */

@@ -1,6 +1,6 @@
-import type { AppData, Progress } from '../types';
+import type { AppData, CheckItem, Checksheet, Progress } from '../types';
 import { mergeColors } from './mappers';
-import { defaultSettings, defaultTheme } from '../defaults';
+import { defaultImageDisplay, defaultSettings, defaultTheme } from '../defaults';
 import { emptyCheckDay, ensureCheckDay, type CheckDay } from '../lib/checklist';
 import { emptyPending, type CacheStorage, type Pending } from './sync';
 
@@ -29,6 +29,32 @@ export function clearLastUser(): void {
   }
 }
 
+/**
+ * チェックリスト関連の補完。以前の形式(シートの中に項目名・時間帯を持つ)で保存されたデータは、
+ * 「チェック項目」として切り出し、時間帯・曜日は捨てる(活動から作った項目は活動の画像設定を引き継ぐ)。
+ */
+export function migrateChecklists(v: Partial<AppData>): { checkItems: CheckItem[]; checksheets: Checksheet[] } {
+  const items = new Map<string, CheckItem>((v.checkItems ?? []).map((i) => [i.id, i]));
+  const sheets: Checksheet[] = [];
+  for (const raw of (v.checksheets ?? []) as unknown as Record<string, unknown>[]) {
+    const legacy = Array.isArray(raw.items) ? (raw.items as { id: string; name: string; activityId?: string | null }[]) : null;
+    let itemIds = Array.isArray(raw.itemIds) ? (raw.itemIds as string[]) : [];
+    if (legacy) {
+      itemIds = [];
+      for (const li of legacy) {
+        if (!items.has(li.id)) {
+          const act = li.activityId ? (v.activities ?? []).find((a) => a.id === li.activityId) : undefined;
+          const base = act ? { imagePath: act.imagePath, shape: act.shape, scale: act.scale, offsetX: act.offsetX, offsetY: act.offsetY, fit: act.fit, borderColor: act.borderColor, borderOpacity: act.borderOpacity, borderWidth: act.borderWidth } : defaultImageDisplay();
+          items.set(li.id, { ...base, id: li.id, name: li.name });
+        }
+        itemIds.push(li.id);
+      }
+    }
+    sheets.push({ id: String(raw.id), name: String(raw.name ?? ''), itemIds, rewardEnabled: raw.rewardEnabled !== false });
+  }
+  return { checkItems: [...items.values()], checksheets: sheets };
+}
+
 /** 将来キーが増えても壊れないように、既定値で補完する */
 export function normalizeAppData(raw: Partial<AppData> | undefined): AppData {
   const v = raw ?? {};
@@ -36,7 +62,7 @@ export function normalizeAppData(raw: Partial<AppData> | undefined): AppData {
     activities: v.activities ?? [],
     presets: v.presets ?? [],
     overrides: v.overrides ?? [],
-    checksheets: v.checksheets ?? [],
+    ...migrateChecklists(v),
     mapLog: v.mapLog ?? [],
     prefImages: v.prefImages ?? {},
     theme: { ...defaultTheme(), ...v.theme, colors: mergeColors(v.theme?.colors) },
@@ -89,6 +115,7 @@ export function saveProgress(p: Progress): void {
 
 // ---- チェックシートの進み具合(端末ごと、その日だけ有効) ----
 const CHECKS_KEY = 'kt:checks:v1';
+export const CHECKS_EVENT = 'kt:checks';
 
 export function loadCheckDay(dateKey: string): CheckDay {
   try {
@@ -101,6 +128,8 @@ export function loadCheckDay(dateKey: string): CheckDay {
 export function saveCheckDay(d: CheckDay): void {
   try {
     localStorage.setItem(CHECKS_KEY, JSON.stringify(d));
+    // 表示中のチェックリスト画面に、設定画面などからの変更(ごほうびの取り消し等)を知らせる
+    if (typeof window !== 'undefined') window.dispatchEvent(new Event(CHECKS_EVENT));
   } catch {
     /* noop */
   }

@@ -1,7 +1,8 @@
 // バックアップ(JSON)の作成・検証・復元データの組み立て。画像はdata URLとして同梱する。
 // ロック用のパスワードハッシュは、バックアップに含めず、復元しても現在の値を保つ。
 
-import type { Activity, AppData, Checksheet, DateOverride, Preset, ScheduleItem } from '../types';
+import type { Activity, AppData, CheckItem, Checksheet, DateOverride, Preset, ScheduleItem } from '../types';
+import { migrateChecklists } from './localCache';
 import { mergeColors } from './mappers';
 import { defaultSettings, defaultTheme } from '../defaults';
 
@@ -22,6 +23,7 @@ export function collectImagePaths(data: AppData): string[] {
   const s = new Set<string>();
   data.activities.forEach((a) => a.imagePath && s.add(a.imagePath));
   data.presets.forEach((p) => p.items.forEach((i) => i.free?.imagePath && s.add(i.free.imagePath)));
+  (data.checkItems ?? []).forEach((i) => i.imagePath && s.add(i.imagePath));
   Object.values(data.prefImages ?? {}).forEach((p) => p && s.add(p));
   return [...s];
 }
@@ -69,8 +71,8 @@ export function parseBackup(text: string): BackupFile {
   };
 }
 
-export function summarizeBackup(b: BackupFile): { activities: number; presets: number; overrides: number; checksheets: number; mapLog: number; images: number; exportedAt: string } {
-  return { activities: b.data.activities.length, presets: b.data.presets.length, overrides: b.data.overrides.length, checksheets: (b.data.checksheets ?? []).length, mapLog: (b.data.mapLog ?? []).length, images: Object.keys(b.images).length, exportedAt: b.exportedAt };
+export function summarizeBackup(b: BackupFile): { activities: number; presets: number; overrides: number; checksheets: number; checkItems: number; mapLog: number; images: number; exportedAt: string } {
+  return { activities: b.data.activities.length, presets: b.data.presets.length, overrides: b.data.overrides.length, checksheets: (b.data.checksheets ?? []).length, checkItems: migrateChecklists(b.data).checkItems.length, mapLog: (b.data.mapLog ?? []).length, images: Object.keys(b.images).length, exportedAt: b.exportedAt };
 }
 
 /**
@@ -131,11 +133,15 @@ export function planRestore(current: AppData, backup: BackupFile, pathMap: Recor
   };
   const theme = { ...defaultTheme(), ...b.theme, colors: mergeColors(b.theme?.colors), version: current.theme.version, updatedAt: nowIso };
 
-  // チェックシート(存在しない活動への参照は外し、項目名だけ残す)
-  const checksheets: Checksheet[] = (b.checksheets ?? []).map((c) => ({
-    ...c,
-    items: (c.items ?? []).map((i) => ({ ...i, activityId: i.activityId && actIds.has(i.activityId) ? i.activityId : null })),
-  }));
+  // チェックリスト(以前の形式のバックアップも取り込む)。項目の画像は復元後のパスに置き換える
+  const mig = migrateChecklists(b);
+  const checkItems: CheckItem[] = mig.checkItems.map((i) => {
+    const path = remap(i.imagePath);
+    if (i.imagePath && !path) warnings.push(`チェック項目「${i.name}」の画像を復元できませんでした`);
+    return { ...i, imagePath: path };
+  });
+  const itemIds = new Set(checkItems.map((i) => i.id));
+  const checksheets: Checksheet[] = mig.checksheets.map((c) => ({ ...c, itemIds: c.itemIds.filter((id) => itemIds.has(id)) }));
   const prefImages: Record<string, string> = {};
   for (const [id, path] of Object.entries(b.prefImages ?? {})) {
     const np = remap(path);
@@ -144,5 +150,5 @@ export function planRestore(current: AppData, backup: BackupFile, pathMap: Recor
   }
   const mapLog = (b.mapLog ?? []).filter((g) => typeof g.prefCode === 'number' && g.prefCode >= 1 && g.prefCode <= 47);
 
-  return { data: { activities, presets, overrides, checksheets, mapLog, prefImages, theme, settings }, warnings };
+  return { data: { activities, presets, overrides, checkItems, checksheets, mapLog, prefImages, theme, settings }, warnings };
 }

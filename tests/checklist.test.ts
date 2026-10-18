@@ -1,43 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { activeSheets, checkedIds, currentItemId, emptyCheckDay, ensureCheckDay, isAllDone, pickDifferent, toggleCheck } from '../src/lib/checklist';
+import { checkedIds, currentItemId, emptyCheckDay, ensureCheckDay, isAllDone, pickDifferent, toggleCheck } from '../src/lib/checklist';
 import { PREFS, PREF_COUNT, mapState, nextGet } from '../src/lib/japan';
 import { JAPAN_SHAPES } from '../src/data/japanMap';
 import { buildBackup, collectImagePaths, parseBackup, planRestore } from '../src/data/backup';
 import { normalizeAppData } from '../src/data/localCache';
 import { hashOf, isEmptyData } from '../src/data/githubSync';
 import { data } from './helpers';
+import { defaultImageDisplay } from '../src/defaults';
 import type { Checksheet, MapGet } from '../src/types';
 
-const sheet = (over: Partial<Checksheet> = {}): Checksheet => ({
-  id: 's1',
-  name: 'あさ',
-  items: [
-    { id: 'a', name: 'ごはん', activityId: null },
-    { id: 'b', name: 'はみがき', activityId: null },
-  ],
-  startMin: 6 * 60 + 30,
-  endMin: 8 * 60,
-  weekdays: [],
-  rewardEnabled: true,
-  ...over,
-});
+const sheet = (over: Partial<Checksheet> = {}): Checksheet => ({ id: 's1', name: 'あさ', itemIds: ['a', 'b'], rewardEnabled: true, ...over });
+const ci = (id: string, name: string, imagePath: string | null = null) => ({ ...defaultImageDisplay(), id, name, imagePath });
 const logN = (n: number): MapGet[] => Array.from({ length: n }, (_, i) => ({ id: `g${i}`, prefCode: (i % 47) + 1, sheetId: 's1', dateKey: '2026-10-18', at: '2026-10-18T00:00:00Z' }));
-
-describe('activeSheets', () => {
-  it('時間帯・曜日で絞る(終了時刻ちょうどは含まない)', () => {
-    const s = sheet();
-    expect(activeSheets([s], 1, 6 * 60 + 29)).toHaveLength(0);
-    expect(activeSheets([s], 1, 6 * 60 + 30)).toHaveLength(1);
-    expect(activeSheets([s], 1, 7 * 60 + 59)).toHaveLength(1);
-    expect(activeSheets([s], 1, 8 * 60)).toHaveLength(0);
-    const wk = sheet({ weekdays: [1, 2] });
-    expect(activeSheets([wk], 0, 7 * 60)).toHaveLength(0);
-    expect(activeSheets([wk], 2, 7 * 60)).toHaveLength(1);
-  });
-  it('項目が空のシートは出さない', () => {
-    expect(activeSheets([sheet({ items: [] })], 1, 7 * 60)).toHaveLength(0);
-  });
-});
 
 describe('チェックの進み方', () => {
   it('チェック→全部できた→外せる', () => {
@@ -130,6 +104,7 @@ describe('データの保存・復元', () => {
   it('古いデータ(新フィールド無し)でも補完される', () => {
     const n = normalizeAppData({ activities: [], presets: [], overrides: [] } as never);
     expect(n.checksheets).toEqual([]);
+    expect(n.checkItems).toEqual([]);
     expect(n.mapLog).toEqual([]);
     expect(n.prefImages).toEqual({});
   });
@@ -137,6 +112,7 @@ describe('データの保存・復元', () => {
     expect(isEmptyData(data())).toBe(true);
     expect(isEmptyData(data({ mapLog: logN(1) }))).toBe(false);
     expect(isEmptyData(data({ checksheets: [sheet()] }))).toBe(false);
+    expect(isEmptyData(data({ checkItems: [ci('a', 'x')] }))).toBe(false);
     expect(isEmptyData(data({ prefImages: { tokyo: 'local/t.webp' } }))).toBe(false);
   });
   it('ぬった記録でハッシュが変わる(同期対象になる)', () => {
@@ -146,15 +122,17 @@ describe('データの保存・復元', () => {
   it('県の絵は画像収集に含まれる', () => {
     expect(collectImagePaths(data({ prefImages: { tokyo: 'local/t.webp' } }))).toContain('local/t.webp');
   });
-  it('バックアップ→復元で、シート・記録・県の絵が戻り、復元できない絵は警告つきで外れる', async () => {
-    const d = data({ checksheets: [sheet()], mapLog: logN(5), prefImages: { tokyo: 'local/t.webp', osaka: 'local/o.webp' } });
+  it('バックアップ→復元で、項目・リスト・記録・県の絵が戻り、復元できない画像は警告つきで外れる', async () => {
+    const d = data({ checkItems: [ci('a', 'ごはん', 'local/a.webp'), ci('b', 'はみがき', 'local/b.webp')], checksheets: [sheet()], mapLog: logN(5), prefImages: { tokyo: 'local/t.webp', osaka: 'local/o.webp' } });
     const { file } = await buildBackup(d, async (p) => `data:image/webp;base64,${p}`);
     const parsed = parseBackup(JSON.stringify(file));
-    const { data: out, warnings } = planRestore(data(), parsed, { 'local/t.webp': 'local/new-t.webp' }, '2026-10-18T00:00:00Z');
-    expect(out.checksheets).toHaveLength(1);
+    const { data: out, warnings } = planRestore(data(), parsed, { 'local/a.webp': 'local/new-a.webp', 'local/t.webp': 'local/new-t.webp' }, '2026-10-18T00:00:00Z');
+    expect(out.checkItems.map((i) => [i.name, i.imagePath])).toEqual([['ごはん', 'local/new-a.webp'], ['はみがき', null]]);
+    expect(out.checksheets[0].itemIds).toEqual(['a', 'b']);
     expect(out.mapLog).toHaveLength(5);
     expect(out.prefImages).toEqual({ tokyo: 'local/new-t.webp' });
     expect(warnings.some((w) => w.includes('県の絵'))).toBe(true);
+    expect(warnings.some((w) => w.includes('はみがき'))).toBe(true);
   });
   it('古いバックアップ(新フィールド無し)も復元できる', () => {
     const d = data();
@@ -162,7 +140,50 @@ describe('データの保存・復元', () => {
     const parsed = parseBackup(JSON.stringify(old));
     const { data: out } = planRestore(data(), parsed, {}, '2026-10-18T00:00:00Z');
     expect(out.checksheets).toEqual([]);
+    expect(out.checkItems).toEqual([]);
     expect(out.mapLog).toEqual([]);
     expect(out.prefImages).toEqual({});
+  });
+});
+
+describe('以前の形式のチェックシートからの移行', () => {
+  const legacy = {
+    activities: [{ ...defaultImageDisplay(), id: 'act1', name: 'はみがき', imagePath: 'local/act1.webp', scale: 1.4 }],
+    presets: [],
+    overrides: [],
+    checksheets: [
+      {
+        id: 's1',
+        name: 'あさ',
+        items: [
+          { id: 'i1', name: 'はみがき', activityId: 'act1' },
+          { id: 'i2', name: 'もちもの', activityId: null },
+        ],
+        startMin: 360,
+        endMin: 540,
+        weekdays: [1],
+        rewardEnabled: false,
+      },
+    ],
+  };
+  it('項目を「チェック項目」に切り出し、時間帯・曜日は捨てる。活動の画像設定は引き継ぐ', () => {
+    const n = normalizeAppData(legacy as never);
+    expect(n.checksheets).toEqual([{ id: 's1', name: 'あさ', itemIds: ['i1', 'i2'], rewardEnabled: false }]);
+    expect(n.checkItems.map((i) => i.name)).toEqual(['はみがき', 'もちもの']);
+    expect(n.checkItems[0].imagePath).toBe('local/act1.webp');
+    expect(n.checkItems[0].scale).toBe(1.4);
+    expect(n.checkItems[1].imagePath).toBeNull();
+  });
+  it('2回正規化しても同じ(冪等)', () => {
+    const once = normalizeAppData(legacy as never);
+    expect(normalizeAppData(once)).toEqual(once);
+  });
+  it('古い形式のバックアップも取り込める', () => {
+    const d = data();
+    const old = { format: 'kids-timer-backup', version: 1, exportedAt: '', data: { ...legacy, theme: d.theme, settings: d.settings }, images: {} };
+    const { data: out } = planRestore(data(), parseBackup(JSON.stringify(old)), { 'local/act1.webp': 'local/new.webp' }, '2026-10-18T00:00:00Z');
+    expect(out.checkItems).toHaveLength(2);
+    expect(out.checksheets[0].itemIds).toEqual(['i1', 'i2']);
+    expect(out.checkItems[0].imagePath).toBe('local/new.webp');
   });
 });
