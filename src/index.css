@@ -194,7 +194,7 @@ button:disabled {
   bottom: 14%;
   line-height: 1;
   opacity: 0;
-  animation: kv-pop 2.6s ease-out forwards;
+  animation: kv-pop 3s ease-out forwards;
 }
 @keyframes kv-pop {
   0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0); }
@@ -217,11 +217,7 @@ button:disabled {
 @keyframes fx-drop { from { transform: translateY(-70cqh) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
 @keyframes fx-wobble { 0% { transform: scale(0.5) rotate(0); opacity: 0; } 30% { transform: scale(1.1) rotate(-10deg); opacity: 1; } 50% { transform: rotate(9deg); } 70% { transform: rotate(-5deg); } 100% { transform: none; } }
 @media (prefers-reduced-motion: reduce) {
-  .kv-art-cur[class*='fx-'] { animation: none; }
-}
-@media (prefers-reduced-motion: reduce) {
   .kv-art-arrow, .kv-art-next { transition: none; }
-  .kv-reward span { animation-duration: 0.01s; }
 }
 .kv-buttons {
   grid-area: buttons;
@@ -1195,11 +1191,11 @@ input[type='color'] {
   touch-action: manipulation;
 }
 /* チェックしたときの行の動き(ランダムに1つ) */
-.cl-fx-pop { animation: cl-pop 2s ease-out; }
-.cl-fx-wiggle { animation: cl-wiggle 2.2s ease-in-out; }
-.cl-fx-flip { animation: cl-flip 2.2s ease-out; }
-.cl-fx-bounce { animation: cl-bounce 2.2s ease-out; }
-.cl-fx-glow { animation: cl-glow 2.4s ease-out; }
+.cl-fx-pop { animation: cl-pop 3s ease-out; }
+.cl-fx-wiggle { animation: cl-wiggle 3s ease-in-out; }
+.cl-fx-flip { animation: cl-flip 3s ease-out; }
+.cl-fx-bounce { animation: cl-bounce 3s ease-out; }
+.cl-fx-glow { animation: cl-glow 3s ease-out; }
 @keyframes cl-pop { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
 @keyframes cl-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-3deg); } 40% { transform: rotate(3deg); } 60% { transform: rotate(-2deg); } 80% { transform: rotate(2deg); } }
 @keyframes cl-flip { from { transform: perspective(900px) rotateX(-90deg); } to { transform: perspective(900px) rotateX(0); } }
@@ -1252,7 +1248,7 @@ input[type='color'] {
   font-size: clamp(24px, 6vmin, 48px);
   padding: 1vmin 4vmin;
   border-radius: 4vmin;
-  animation: cl-pop 0.9s ease-out;
+  animation: cl-pop 3s ease-out;
 }
 .cl-reward-no {
   background: #ebe8f8;
@@ -1289,7 +1285,7 @@ input[type='color'] {
 .jm-pref.pop {
   transform-box: fill-box;
   transform-origin: center;
-  animation: jm-pop 1.4s ease-out;
+  animation: jm-pop 3s ease-out;
 }
 .jm-ov {
   fill: none;
@@ -1297,7 +1293,7 @@ input[type='color'] {
   pointer-events: none;
 }
 .jm-ov.sel, .jm-ov.pop { stroke: #2f2a52; }
-.jm-ov.pop { transform-box: fill-box; transform-origin: center; animation: jm-pop 1.4s ease-out; }
+.jm-ov.pop { transform-box: fill-box; transform-origin: center; animation: jm-pop 3s ease-out; }
 .jm-ov.target { stroke: #e59a00; }
 .jm-frame {
   fill: none;
@@ -1307,10 +1303,6 @@ input[type='color'] {
 }
 @keyframes jm-blink { 0%, 100% { fill: #ffffff; } 50% { fill: #ffd23f; } }
 @keyframes jm-pop { 0% { transform: scale(1); } 30% { transform: scale(1.5); } 60% { transform: scale(0.95); } 100% { transform: scale(1); } }
-@media (prefers-reduced-motion: reduce) {
-  .jm-pref.target { animation: none; fill: #ffd23f; }
-  .jm-pref.pop { animation: none; }
-}
 .cl-reward-body {
   flex: 1;
   min-height: 0;
@@ -1396,7 +1388,7 @@ input[type='color'] {
 .cl-pref-emoji {
   font-size: clamp(48px, 12vmin, 110px);
   line-height: 1;
-  animation: cl-pop 1s ease-out;
+  animation: cl-pop 3s ease-out;
 }
 .cl-pref-text {
   flex: 1;
