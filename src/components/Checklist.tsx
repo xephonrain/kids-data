@@ -40,7 +40,7 @@ function makeBurst(id: number, x: number, y: number, set: string[]): Burst {
     items: Array.from({ length: n }, (_, i) => {
       const ang = (i / n) * Math.PI * 2 + r(-0.3, 0.3);
       const dist = r(14, 30);
-      return { emoji: set[Math.floor(Math.random() * set.length)], dx: Math.cos(ang) * dist, dy: Math.sin(ang) * dist - 6, rot: r(-60, 60), size: r(4, 8), delay: r(0, 0.15) };
+      return { emoji: set[Math.floor(Math.random() * set.length)], dx: Math.cos(ang) * dist, dy: Math.sin(ang) * dist - 6, rot: r(-60, 60), size: r(4, 8), delay: r(0, 0.3) };
     }),
   };
 }
@@ -67,7 +67,7 @@ function useBursts() {
   const add = useCallback((x: number, y: number, set: string[]) => {
     const id = seq.current++;
     setBursts((b) => [...b.slice(-4), makeBurst(id, x, y, set)]);
-    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 4200);
+    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 5800);
   }, []);
   return { bursts, add };
 }

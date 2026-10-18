@@ -48,7 +48,7 @@ export const CAPITALS: Record<number, { name: string; kana: string }> = {
   10: { name: '前橋', kana: 'まえばし' },
   11: { name: 'さいたま', kana: 'さいたま' },
   12: { name: '千葉', kana: 'ちば' },
-  13: { name: '新宿', kana: 'しんじゅく' },
+  13: { name: '東京', kana: 'とうきょう' },
   14: { name: '横浜', kana: 'よこはま' },
   15: { name: '新潟', kana: 'にいがた' },
   16: { name: '富山', kana: 'とやま' },

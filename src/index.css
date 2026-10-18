@@ -1195,11 +1195,11 @@ input[type='color'] {
   touch-action: manipulation;
 }
 /* チェックしたときの行の動き(ランダムに1つ) */
-.cl-fx-pop { animation: cl-pop 1.5s ease-out; }
-.cl-fx-wiggle { animation: cl-wiggle 1.7s ease-in-out; }
-.cl-fx-flip { animation: cl-flip 1.8s ease-out; }
-.cl-fx-bounce { animation: cl-bounce 1.8s ease-out; }
-.cl-fx-glow { animation: cl-glow 2s ease-out; }
+.cl-fx-pop { animation: cl-pop 2s ease-out; }
+.cl-fx-wiggle { animation: cl-wiggle 2.2s ease-in-out; }
+.cl-fx-flip { animation: cl-flip 2.2s ease-out; }
+.cl-fx-bounce { animation: cl-bounce 2.2s ease-out; }
+.cl-fx-glow { animation: cl-glow 2.4s ease-out; }
 @keyframes cl-pop { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
 @keyframes cl-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-3deg); } 40% { transform: rotate(3deg); } 60% { transform: rotate(-2deg); } 80% { transform: rotate(2deg); } }
 @keyframes cl-flip { from { transform: perspective(900px) rotateX(-90deg); } to { transform: perspective(900px) rotateX(0); } }
@@ -1222,11 +1222,13 @@ input[type='color'] {
   position: absolute;
   line-height: 1;
   opacity: 0;
-  animation: cl-spark 3.6s ease-out forwards;
+  animation: cl-spark 5s cubic-bezier(0.25, 0.6, 0.4, 1) forwards;
 }
 @keyframes cl-spark {
   0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0); }
-  18% { opacity: 1; transform: translate(calc(var(--dx) * 0.5), calc(var(--dy) * 0.5)) scale(1.2) rotate(calc(var(--rot) * 0.5)); }
+  8% { opacity: 1; }
+  25% { transform: translate(calc(var(--dx) * 0.55), calc(var(--dy) * 0.55)) scale(1.2) rotate(calc(var(--rot) * 0.5)); }
+  70% { opacity: 1; }
   100% { opacity: 0; transform: translate(var(--dx), calc(var(--dy) + 8vmin)) scale(0.9) rotate(var(--rot)); }
 }
 /* ごほうび */
@@ -1281,31 +1283,29 @@ input[type='color'] {
   display: block;
 }
 .jm-pref {
-  vector-effect: non-scaling-stroke;
-  stroke: #6f6a8f;
-  stroke-width: 1;
-  stroke-linejoin: round;
   transition: fill 1.2s ease;
+  stroke: #6f6a8f;
+  stroke-linejoin: round;
 }
 .jm-pref.pick {
   cursor: pointer;
 }
-.jm-pref.sel {
-  stroke: #2f2a52;
-  stroke-width: 2.2;
-}
 .jm-pref.target {
   animation: jm-blink 1s ease-in-out infinite;
-  stroke: #e59a00;
-  stroke-width: 2.6;
 }
 .jm-pref.pop {
   transform-box: fill-box;
   transform-origin: center;
   animation: jm-pop 1.4s ease-out;
-  stroke: #2f2a52;
-  stroke-width: 2.2;
 }
+.jm-ov {
+  fill: none;
+  stroke-linejoin: round;
+  pointer-events: none;
+}
+.jm-ov.sel, .jm-ov.pop { stroke: #2f2a52; }
+.jm-ov.pop { transform-box: fill-box; transform-origin: center; animation: jm-pop 1.4s ease-out; }
+.jm-ov.target { stroke: #e59a00; }
 .jm-frame {
   fill: none;
   stroke: #b9b3e3;
