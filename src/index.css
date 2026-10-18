@@ -543,7 +543,7 @@ input[type='color'] {
   display: grid;
   place-items: center;
   padding: 16px;
-  z-index: 50;
+  z-index: 200;
 }
 .modal {
   background: #fff;

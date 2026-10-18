@@ -97,7 +97,7 @@ export function MainScreen({ onOpenSettings }: { onOpenSettings: () => void }) {
       />
       <div className="mode-bar">
         <button type="button" className="mode-switch" onClick={() => setView('check')}>
-          ✅ チェックリスト
+          🔄 きりかえ
         </button>
         {badge}
       </div>

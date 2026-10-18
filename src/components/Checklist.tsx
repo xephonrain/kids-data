@@ -100,7 +100,7 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
       <div className="cl-screen" role="dialog" aria-label="チェックリスト">
         <div className="cl-head">
           <button className="cl-small" onClick={onSwitch}>
-            ⏰ スケジュール
+            🔄 きりかえ
           </button>
           <button className="cl-small" onClick={onSettings}>
             せってい
@@ -158,7 +158,7 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
     <div className="cl-screen" role="dialog" aria-label="チェックシート">
       <div className="cl-head">
         <button className="cl-small" onClick={onSwitch}>
-          ⏰ スケジュール
+          🔄 きりかえ
         </button>
         <button className="cl-small" onClick={onSettings}>
           せってい

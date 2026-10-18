@@ -40,7 +40,7 @@ function Shell({ setUnlocked, onDisconnect }: { setUnlocked: (v: boolean) => voi
         />
       )}
       {view === 'settings' && (
-        <div style={{ position: 'fixed', inset: 0, overflow: 'auto', background: '#f5f4fb', zIndex: 20 }}>
+        <div style={{ position: 'fixed', inset: 0, overflow: 'auto', background: '#f5f4fb', zIndex: 100 }}>
           <SettingsScreen onClose={() => go('main')} onDisconnect={onDisconnect} />
         </div>
       )}
