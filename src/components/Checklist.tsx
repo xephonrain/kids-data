@@ -67,7 +67,7 @@ function useBursts() {
   const add = useCallback((x: number, y: number, set: string[]) => {
     const id = seq.current++;
     setBursts((b) => [...b.slice(-4), makeBurst(id, x, y, set)]);
-    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 62000);
+    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 3300);
   }, []);
   return { bursts, add };
 }
@@ -143,7 +143,7 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
     if (nowAll && canReward && !next.reward[sheet.id]) {
       next = { ...next, reward: { ...next.reward, [sheet.id]: { claimed: false } } };
       clearTimeout(timer.current);
-      timer.current = setTimeout(() => setRewardFor(sheet.id), 2600);
+      timer.current = setTimeout(() => setRewardFor(sheet.id), 3200);
     } else if (!nowAll && next.reward[sheet.id] && !next.reward[sheet.id].claimed) {
       const { [sheet.id]: _drop, ...rest } = next.reward;
       next = { ...next, reward: rest };

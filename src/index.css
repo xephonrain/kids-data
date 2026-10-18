@@ -1222,7 +1222,7 @@ input[type='color'] {
   position: absolute;
   line-height: 1;
   opacity: 0;
-  animation: cl-spark 60s cubic-bezier(0.25, 0.6, 0.4, 1) forwards;
+  animation: cl-spark 3s cubic-bezier(0.25, 0.6, 0.4, 1) forwards;
 }
 @keyframes cl-spark {
   0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0); }
