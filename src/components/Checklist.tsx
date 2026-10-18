@@ -67,7 +67,7 @@ function useBursts() {
   const add = useCallback((x: number, y: number, set: string[]) => {
     const id = seq.current++;
     setBursts((b) => [...b.slice(-4), makeBurst(id, x, y, set)]);
-    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 5800);
+    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 62000);
   }, []);
   return { bursts, add };
 }
