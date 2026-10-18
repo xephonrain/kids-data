@@ -1195,11 +1195,11 @@ input[type='color'] {
   touch-action: manipulation;
 }
 /* チェックしたときの行の動き(ランダムに1つ) */
-.cl-fx-pop { animation: cl-pop 0.7s ease-out; }
-.cl-fx-wiggle { animation: cl-wiggle 0.8s ease-in-out; }
-.cl-fx-flip { animation: cl-flip 0.9s ease-out; }
-.cl-fx-bounce { animation: cl-bounce 0.9s ease-out; }
-.cl-fx-glow { animation: cl-glow 1s ease-out; }
+.cl-fx-pop { animation: cl-pop 1.5s ease-out; }
+.cl-fx-wiggle { animation: cl-wiggle 1.7s ease-in-out; }
+.cl-fx-flip { animation: cl-flip 1.8s ease-out; }
+.cl-fx-bounce { animation: cl-bounce 1.8s ease-out; }
+.cl-fx-glow { animation: cl-glow 2s ease-out; }
 @keyframes cl-pop { 0% { transform: scale(1); } 35% { transform: scale(1.07); } 100% { transform: scale(1); } }
 @keyframes cl-wiggle { 0%, 100% { transform: rotate(0); } 20% { transform: rotate(-3deg); } 40% { transform: rotate(3deg); } 60% { transform: rotate(-2deg); } 80% { transform: rotate(2deg); } }
 @keyframes cl-flip { from { transform: perspective(900px) rotateX(-90deg); } to { transform: perspective(900px) rotateX(0); } }
@@ -1222,7 +1222,7 @@ input[type='color'] {
   position: absolute;
   line-height: 1;
   opacity: 0;
-  animation: cl-spark 1.7s ease-out forwards;
+  animation: cl-spark 3.6s ease-out forwards;
 }
 @keyframes cl-spark {
   0% { opacity: 0; transform: translate(0, 0) scale(0.3) rotate(0); }
@@ -1328,12 +1328,12 @@ input[type='color'] {
   gap: 2vmin;
 }
 .cl-reward-map {
-  flex: 1 1 0;
+  flex: 2.2 1 0;
   min-height: 0;
   width: 100%;
   background: #fff;
   border-radius: 4vmin;
-  padding: 1.5vmin;
+  padding: 0.6vmin;
 }
 .cl-reward-side {
   flex: none;
@@ -1370,7 +1370,7 @@ input[type='color'] {
     align-items: stretch;
   }
   .cl-reward-map {
-    flex: 1 1 0;
+    flex: 1.6 1 0;
     width: auto;
   }
   .cl-reward-side {
@@ -1448,12 +1448,12 @@ input[type='color'] {
   gap: 2vmin;
 }
 .cl-book-map {
-  flex: 1 1 0;
+  flex: 2 1 0;
   min-height: 0;
 }
 .cl-book-side {
   flex: none;
-  max-height: 46%;
+  max-height: 38%;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -1490,7 +1490,7 @@ input[type='color'] {
     flex-direction: row;
   }
   .cl-book-map {
-    flex: 1 1 0;
+    flex: 1.5 1 0;
   }
   .cl-book-side {
     flex: 1 1 0;
@@ -1629,3 +1629,14 @@ input[type='color'] {
   height: 36px;
   container-type: size;
 }
+
+.cl-head-r { display: flex; gap: 8px; }
+.cl-pref-cap { font-weight: 700; font-size: clamp(13px, 2.5vmin, 21px); color: #4b3fa0; }
+.cl-pref-cap b { font-weight: 900; }
+.cl-pref-cap span { margin-left: 4px; font-size: 0.8em; color: #6b6697; }
+.cl-pick-back { position: absolute; inset: 0; z-index: 90; background: rgba(47, 42, 82, 0.55); display: grid; place-items: center; padding: 16px; }
+.cl-pick { background: #fff; border-radius: 20px; padding: 16px; width: min(480px, 100%); max-height: 100%; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+.cl-pick-title { font-weight: 900; font-size: clamp(18px, 3.4vmin, 28px); text-align: center; }
+.cl-pick-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; }
+.cl-pick-list button { border: 2px solid #dcd8f0; background: #fff; border-radius: 14px; min-height: 56px; padding: 0 16px; font-family: inherit; font-weight: 800; font-size: clamp(16px, 3vmin, 24px); color: #2f2a52; text-align: left; }
+.cl-pick-list button.on { background: #6c63c9; border-color: #6c63c9; color: #fff; }

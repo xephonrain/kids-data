@@ -5,7 +5,7 @@ import { CHECKS_EVENT, loadCheckDay, saveCheckDay } from '../data/localCache';
 import { useStore } from '../data/store';
 import { newId } from '../defaults';
 import { checkedIds, currentItemId, ensureCheckDay, isAllDone, pickDifferent, plainImage, toggleCheck, type CheckDay } from '../lib/checklist';
-import { PREF_COUNT, mapState, nextGet, prefByCode, type Pref } from '../lib/japan';
+import { CAPITALS, PREF_COUNT, mapState, nextGet, prefByCode, type Pref } from '../lib/japan';
 import { CHECK_SOUNDS, playSound } from '../lib/sound';
 import { dateKey } from '../lib/time';
 import type { Checksheet } from '../types';
@@ -67,7 +67,7 @@ function useBursts() {
   const add = useCallback((x: number, y: number, set: string[]) => {
     const id = seq.current++;
     setBursts((b) => [...b.slice(-4), makeBurst(id, x, y, set)]);
-    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 2000);
+    setTimeout(() => setBursts((b) => b.filter((q) => q.id !== id)), 4200);
   }, []);
   return { bursts, add };
 }
@@ -79,6 +79,7 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
   const [day, setDay] = useState<CheckDay>(() => loadCheckDay(today));
   const [sheetId, setSheetId] = useState(sheets[0]?.id ?? '');
   const [rewardFor, setRewardFor] = useState<string | null>(null);
+  const [picking, setPicking] = useState(false);
   const [fx, setFx] = useState<{ id: string; cls: string; n: number } | null>(null);
   const { bursts, add } = useBursts();
   const lastSound = useRef(-1);
@@ -142,7 +143,7 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
     if (nowAll && canReward && !next.reward[sheet.id]) {
       next = { ...next, reward: { ...next.reward, [sheet.id]: { claimed: false } } };
       clearTimeout(timer.current);
-      timer.current = setTimeout(() => setRewardFor(sheet.id), 1100);
+      timer.current = setTimeout(() => setRewardFor(sheet.id), 2600);
     } else if (!nowAll && next.reward[sheet.id] && !next.reward[sheet.id].claimed) {
       const { [sheet.id]: _drop, ...rest } = next.reward;
       next = { ...next, reward: rest };
@@ -166,20 +167,43 @@ export function ChecklistScreen({ sheets, onSwitch, onSettings, onOpenBook }: { 
         <button className="cl-small" onClick={onSwitch}>
           🔄 きりかえ
         </button>
-        <button className="cl-small" onClick={onSettings}>
-          せってい
-        </button>
+        <div className="cl-head-r">
+          <button className="cl-small" onClick={() => setPicking(true)} aria-haspopup="dialog">
+            📋 リスト
+          </button>
+          <button className="cl-small" onClick={onSettings}>
+            せってい
+          </button>
+        </div>
       </div>
       <div className="cl-title-row">
         <div className="cl-title">{sheet.name}</div>
       </div>
-      {sheets.length > 1 && (
-        <div className="cl-tabs" role="tablist">
-          {sheets.map((s) => (
-            <button key={s.id} role="tab" aria-selected={s.id === sheet.id} className={s.id === sheet.id ? 'on' : ''} onClick={() => setSheetId(s.id)}>
-              {s.name}
+      {picking && (
+        <div className="cl-pick-back" onClick={() => setPicking(false)}>
+          <div className="cl-pick" role="dialog" aria-label="リストをえらぶ" onClick={(e) => e.stopPropagation()}>
+            <div className="cl-pick-title">リストを えらぶ</div>
+            <div className="cl-pick-list" role="tablist">
+              {sheets.map((s) => (
+                <button
+                  key={s.id}
+                  role="tab"
+                  aria-selected={s.id === sheet.id}
+                  className={s.id === sheet.id ? 'on' : ''}
+                  onClick={() => {
+                    setSheetId(s.id);
+                    setPicking(false);
+                  }}
+                >
+                  {s.id === sheet.id ? '✅ ' : ''}
+                  {s.name}
+                </button>
+              ))}
+            </div>
+            <button className="cl-small" onClick={() => setPicking(false)}>
+              とじる
             </button>
-          ))}
+          </div>
         </div>
       )}
       <div className="cl-stars" role="img" aria-label={`${items.length}つのうち${done.size}つできた`}>
@@ -254,6 +278,12 @@ export function PrefCard({ pref }: { pref: Pref }) {
             <span key={it}>{it}</span>
           ))}
         </div>
+        {CAPITALS[pref.code] && (
+          <div className="cl-pref-cap">
+            🏛️ けんちょうしょざいち: <b>{CAPITALS[pref.code].name}</b>
+            <span>({CAPITALS[pref.code].kana})</span>
+          </div>
+        )}
         <div className="cl-pref-feature">{pref.feature}</div>
       </div>
     </div>
